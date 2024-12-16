@@ -200,7 +200,7 @@ bool right = false;
 // usuário através do mouse (veja função CursorPosCallback()). A posição
 // efetiva da câmera é calculada dentro da função main(), dentro do loop de
 // renderização.
-float g_CameraTheta = 0.0f; // Ângulo no plano ZX em relação ao eixo Z
+float g_CameraTheta = 4.0f; // Ângulo no plano ZX em relação ao eixo Z
 float g_CameraPhi = 0.0f;   // Ângulo em relação ao eixo Y
 float g_CameraDistance = 3.5f; // Distância da câmera para a origem
 
@@ -259,7 +259,7 @@ int main(int argc, char* argv[])
     // Criamos uma janela do sistema operacional, com 800 colunas e 600 linhas
     // de pixels, e com título "INF01047 ...".
     GLFWwindow* window;
-    window = glfwCreateWindow(800, 600, "INF01047 - Seu Cartao - Seu Nome", NULL, NULL);
+    window = glfwCreateWindow(800, 600, "INF01047 - 00334988 - Lucca Dellazen Claus", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -270,6 +270,9 @@ int main(int argc, char* argv[])
     // Definimos a função de callback que será chamada sempre que o usuário
     // pressionar alguma tecla do teclado ...
     glfwSetKeyCallback(window, KeyCallback);
+
+    float prevFrame = (float)glfwGetTime();
+
     // ... ou clicar os botões do mouse ...
     glfwSetMouseButtonCallback(window, MouseButtonCallback);
     // ... ou movimentar o cursor do mouse em cima da janela ...
@@ -306,6 +309,7 @@ int main(int argc, char* argv[])
     // Carregamos duas imagens para serem utilizadas como textura
     LoadTextureImage("../../data/tc-earth_daymap_surface.jpg");      // TextureImage0
     LoadTextureImage("../../data/tc-earth_nightmap_citylights.gif"); // TextureImage1
+    // LoadTextureImage("../../data/island_texture.png"); // TextureImage2
 
     // Construímos a representação de objetos geométricos através de malhas de triângulos
     ObjModel spheremodel("../../data/sphere.obj");
@@ -319,6 +323,10 @@ int main(int argc, char* argv[])
     ObjModel planemodel("../../data/plane.obj");
     ComputeNormals(&planemodel);
     BuildTrianglesAndAddToVirtualScene(&planemodel);
+
+    ObjModel islandmodel("../../data/Floating_Island_Seren_1216154904_generate.obj");
+    ComputeNormals(&islandmodel);
+    BuildTrianglesAndAddToVirtualScene(&islandmodel);
 
     if ( argc > 1 )
     {
@@ -337,7 +345,8 @@ int main(int argc, char* argv[])
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
 
-    double prevFrame = glfwGetTime();
+    // Inicialização da posição e orientação da câmera 
+    glm::vec4 camera_position_c  = glm::vec4(4.0f,0.0f,4.0f,1.0f); // Ponto "c", centro da câmera
 
     // Ficamos em um loop infinito, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
@@ -371,7 +380,6 @@ int main(int argc, char* argv[])
 
         // Abaixo definimos as varáveis que efetivamente definem a câmera virtual.
         // Veja slides 195-227 e 229-234 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
-        glm::vec4 camera_position_c  = glm::vec4(x,y,z,1.0f); // Ponto "c", centro da câmera
         glm::vec4 camera_lookat_l    = glm::vec4(0.0f,0.0f,0.0f,1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando
         glm::vec4 camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
 
@@ -383,10 +391,11 @@ int main(int argc, char* argv[])
         glm::vec4 u = crossproduct(camera_up_vector, w);
 
         //Tempo do frame atual
-        double actFrame = glfwGetTime();
+        float actFrame = (float)glfwGetTime();
 
         //Variação de tempo
         float timeDiff = actFrame - prevFrame;
+        prevFrame = actFrame;
 
         // Modificação dos parâmetros da câmera ao pressionarmos qualquer tecla de movimentação
         if (forward) {
@@ -453,28 +462,36 @@ int main(int argc, char* argv[])
         #define SPHERE 0
         #define BUNNY  1
         #define PLANE  2
+        #define ISLAND 3
 
         // Desenhamos o modelo da esfera
-        model = Matrix_Translate(-1.0f,0.0f,0.0f)
-              * Matrix_Rotate_Z(0.6f)
-              * Matrix_Rotate_X(0.2f)
-              * Matrix_Rotate_Y(g_AngleY + (float)glfwGetTime() * 0.1f);
+        model = Matrix_Translate(-1.0f,0.0f,0.0f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, SPHERE);
         DrawVirtualObject("the_sphere");
 
         // Desenhamos o modelo do coelho
         model = Matrix_Translate(1.0f,0.0f,0.0f)
-              * Matrix_Rotate_X(g_AngleX + (float)glfwGetTime() * 0.1f);
+              * Matrix_Rotate_Z(g_AngleZ)
+              * Matrix_Rotate_Y(g_AngleY)
+              * Matrix_Rotate_X(g_AngleX);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, BUNNY);
         DrawVirtualObject("the_bunny");
 
-        // Desenhamos o plano do chão
-        model = Matrix_Translate(0.0f,-1.1f,0.0f);
+        //Desenhamos o modelo do plano
+        model = Matrix_Translate(0.0f,-1.0f,0.0f)
+              * Matrix_Scale(2.0f,1.0f,2.0f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, PLANE);
         DrawVirtualObject("the_plane");
+
+
+        model = Matrix_Translate(0.0f,-1.1f,0.0f)
+            * Matrix_Scale(3.0f, 3.0f, 3.0f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, ISLAND);
+        DrawVirtualObject("the_island");
 
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
         // terceiro cubo.
@@ -1117,8 +1134,8 @@ void CursorPosCallback(GLFWwindow* window, double xpos, double ypos)
         float dy = ypos - g_LastCursorPosY;
     
         // Atualizamos parâmetros da câmera com os deslocamentos
-        g_CameraTheta -= 0.01f*dx;
-        g_CameraPhi   += 0.01f*dy;
+        g_CameraTheta -= 0.005f*dx;
+        g_CameraPhi   -= 0.005f*dy;
     
         // Em coordenadas esféricas, o ângulo phi deve ficar entre -pi/2 e +pi/2.
         float phimax = 3.141592f/2;
