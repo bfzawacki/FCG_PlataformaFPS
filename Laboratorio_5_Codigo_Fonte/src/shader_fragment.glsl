@@ -84,9 +84,16 @@ void main()
         //   variável position_model
 
         vec4 bbox_center = (bbox_min + bbox_max) / 2.0;
+        float radius = 1.0;
 
-        U = 0.0;
-        V = 0.0;
+        vec4 pLine = bbox_center + radius * (position_model-bbox_center/length(position_model-bbox_center));
+        vec4 pLineVec = pLine - bbox_center;
+
+        float theta = atan(pLineVec.x, pLineVec.z);
+        float phi = asin(pLineVec.y/radius);
+
+        U = (theta + M_PI) / (2*M_PI);
+        V = (phi + M_PI_2) / M_PI;
     }
     else if ( object_id == BUNNY )
     {
@@ -108,8 +115,8 @@ void main()
         float minz = bbox_min.z;
         float maxz = bbox_max.z;
 
-        U = 0.0;
-        V = 0.0;
+        U = (position_model.x - minx)/(maxx - minx);
+        V = (position_model.y- miny )/(maxy - miny);
     }
     else if ( object_id == PLANE )
     {
@@ -121,10 +128,12 @@ void main()
     // Obtemos a refletância difusa a partir da leitura da imagem TextureImage0
     vec3 Kd0 = texture(TextureImage0, vec2(U,V)).rgb;
 
+    vec3 Kd1 = texture(TextureImage1, vec2(U,V)).rgb;
+
     // Equação de Iluminação
     float lambert = max(0,dot(n,l));
 
-    color.rgb = Kd0 * (lambert + 0.01);
+    color.rgb = Kd0 * (lambert + 0.01) + (Kd1 * max(0,(0.275 - lambert)));
 
     // NOTE: Se você quiser fazer o rendering de objetos transparentes, é
     // necessário:
@@ -144,4 +153,3 @@ void main()
     // Veja https://en.wikipedia.org/w/index.php?title=Gamma_correction&oldid=751281772#Windows.2C_Mac.2C_sRGB_and_TV.2Fvideo_standard_gammas
     color.rgb = pow(color.rgb, vec3(1.0,1.0,1.0)/2.2);
 } 
-
