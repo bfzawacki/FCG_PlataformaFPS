@@ -309,7 +309,7 @@ int main(int argc, char* argv[])
     // Carregamos duas imagens para serem utilizadas como textura
     LoadTextureImage("../../data/tc-earth_daymap_surface.jpg");      // TextureImage0
     LoadTextureImage("../../data/tc-earth_nightmap_citylights.gif"); // TextureImage1
-    // LoadTextureImage("../../data/island_texture.png"); // TextureImage2
+    LoadTextureImage("../../data/Floating_Island_Seren_1216154845_texture.png"); // TextureImage2
 
     // Construímos a representação de objetos geométricos através de malhas de triângulos
     ObjModel spheremodel("../../data/sphere.obj");
@@ -324,7 +324,7 @@ int main(int argc, char* argv[])
     ComputeNormals(&planemodel);
     BuildTrianglesAndAddToVirtualScene(&planemodel);
 
-    ObjModel islandmodel("../../data/Floating_Island_Seren_1216154904_generate.obj");
+    ObjModel islandmodel("../../data/island.obj");
     ComputeNormals(&islandmodel);
     BuildTrianglesAndAddToVirtualScene(&islandmodel);
 
@@ -400,22 +400,22 @@ int main(int argc, char* argv[])
         // Modificação dos parâmetros da câmera ao pressionarmos qualquer tecla de movimentação
         if (forward) {
             w = w/norm(w);
-            camera_position_c += -w * 0.5f * timeDiff;
+            camera_position_c += -w * 5.0f * timeDiff;
         }
 
         if (backward) {
             w = w/norm(w);
-            camera_position_c += w * 0.5f * timeDiff;
+            camera_position_c += w * 5.0f * timeDiff;
             }
 
         if (left) {
             u = u/norm(u);
-            camera_position_c += -u * 0.5f * timeDiff;
+            camera_position_c += -u * 5.0f * timeDiff;
         }
 
         if (right) {
             u = u/norm(u);
-            camera_position_c += u * 0.5f * timeDiff;
+            camera_position_c += u * 5.0f * timeDiff;
         }
 
         // Computamos a matriz "View" utilizando os parâmetros da câmera para
@@ -428,7 +428,7 @@ int main(int argc, char* argv[])
         // Note que, no sistema de coordenadas da câmera, os planos near e far
         // estão no sentido negativo! Veja slides 176-204 do documento Aula_09_Projecoes.pdf.
         float nearplane = -0.1f;  // Posição do "near plane"
-        float farplane  = -10.0f; // Posição do "far plane"
+        float farplane  = -50.0f; // Posição do "far plane"
 
         if (g_UsePerspectiveProjection)
         {
@@ -486,9 +486,9 @@ int main(int argc, char* argv[])
         glUniform1i(g_object_id_uniform, PLANE);
         DrawVirtualObject("the_plane");
 
-
-        model = Matrix_Translate(0.0f,-1.1f,0.0f)
-            * Matrix_Scale(3.0f, 3.0f, 3.0f);
+        //Desenhamos o modelo da ilha
+        model = Matrix_Translate(7.0f,0.0f,0.0f)
+            * Matrix_Scale(7.0f, 7.0f, 7.0f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, ISLAND);
         DrawVirtualObject("the_island");

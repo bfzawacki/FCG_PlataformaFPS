@@ -1,0 +1,3 @@
+C:/Users/bfzaw/Documents/GitHub/FCG_PlataformaFPS/build/CMakeFiles/main.dir
+C:/Users/bfzaw/Documents/GitHub/FCG_PlataformaFPS/build/CMakeFiles/edit_cache.dir
+C:/Users/bfzaw/Documents/GitHub/FCG_PlataformaFPS/build/CMakeFiles/rebuild_cache.dir

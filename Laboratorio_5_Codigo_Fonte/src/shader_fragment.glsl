@@ -22,6 +22,7 @@ uniform mat4 projection;
 #define SPHERE 0
 #define BUNNY  1
 #define PLANE  2
+#define ISLAND 3
 uniform int object_id;
 
 // Parâmetros da axis-aligned bounding box (AABB) do modelo
@@ -125,15 +126,42 @@ void main()
         V = texcoords.y;
     }
 
+    else if ( object_id == ISLAND )
+{
+    // Projeção planar XY para a ilha em coordenadas do modelo.
+    // Assumindo bbox_min e bbox_max já configurados para a ilha.
+    float minx = bbox_min.x;
+    float maxx = bbox_max.x;
+
+    float miny = bbox_min.y;
+    float maxy = bbox_max.y;
+
+    // Normalização das coordenadas U e V no intervalo [0,1]
+    U = (position_model.x - minx) / (maxx - minx);
+    V = (position_model.y - miny) / (maxy - miny);
+}
+
+
     // Obtemos a refletância difusa a partir da leitura da imagem TextureImage0
     vec3 Kd0 = texture(TextureImage0, vec2(U,V)).rgb;
 
     vec3 Kd1 = texture(TextureImage1, vec2(U,V)).rgb;
 
+    vec3 Kd2 = texture(TextureImage2, vec2(U, V)).rgb;
+
+
     // Equação de Iluminação
     float lambert = max(0,dot(n,l));
-
-    color.rgb = Kd0 * (lambert + 0.01) + (Kd1 * max(0,(0.275 - lambert)));
+    if (object_id == ISLAND)
+{
+        // Iluminação usando a textura da ilha (TextureImage2)
+        color.rgb = Kd2 * (lambert + 0.01);
+}
+    else
+{
+        // Outros objetos usam Kd0 e Kd1
+        color.rgb = Kd0 * (lambert + 0.01) + (Kd1 * max(0, (0.275 - lambert)));
+}
 
     // NOTE: Se você quiser fazer o rendering de objetos transparentes, é
     // necessário:
