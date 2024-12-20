@@ -26,6 +26,7 @@
 #include <vector>
 #include <limits>
 #include <fstream>
+#include <iostream>
 #include <sstream>
 #include <stdexcept>
 #include <algorithm>
@@ -106,6 +107,36 @@ struct ObjModel
     }
 };
 
+// float skyBoxVertices[] = {
+//     -1.0f, -1.0f, 1.0f,
+//     1.0f, -1.0f, 1.0f,
+//     1.0f, -1.0f, -1.0f,
+//     -1.0f, -1.0f, -1.0f,
+//     -1.0f, 1.0f, 1.0f,
+//     1.0f, 1.0f, 1.0f,
+//     1.0f, 1.0f, -1.0f,
+//     -1.0f, 1.0f, -1.0f
+// };
+
+// unsigned int skyBoxIndices[] = {
+//     1,2,6,
+//     6,5,1,
+
+//     0,4,7,
+//     7,3,0,
+
+//     4,5,6,
+//     6,7,4,
+
+//     0,3,2,
+//     2,1,0,
+
+//     0,1,5,
+//     5,4,0,
+
+//     3,7,6,
+//     6,2,3
+// };
 
 // Declaração de funções utilizadas para pilha de matrizes de modelagem.
 void PushMatrix(glm::mat4 M);
@@ -123,6 +154,7 @@ GLuint LoadShader_Fragment(const char* filename); // Carrega um fragment shader
 void LoadShader(const char* filename, GLuint shader_id); // Função utilizada pelas duas acima
 GLuint CreateGpuProgram(GLuint vertex_shader_id, GLuint fragment_shader_id); // Cria um programa de GPU
 void PrintObjModelInfo(ObjModel*); // Função para debugging
+unsigned int LoadSkyBox(std::vector<std::string> faces);
 
 // Declaração de funções auxiliares para renderizar texto dentro da janela
 // OpenGL. Estas funções estão definidas no arquivo "textrendering.cpp".
@@ -229,6 +261,16 @@ GLint g_bbox_max_uniform;
 
 // Número de texturas carregadas pela função LoadTextureImage()
 GLuint g_NumLoadedTextures = 0;
+
+std::vector<std::string> faces = {
+    "right.jpg",
+    "left.jpg",
+    "top.jpg",
+    "bottom.jpg",
+    "front.jpg",
+    "back.jpg"
+};
+unsigned int skyBoxTexture = LoadSkyBox(faces);
 
 int main(int argc, char* argv[])
 {
@@ -1455,6 +1497,38 @@ void TextRendering_ShowFramesPerSecond(GLFWwindow* window)
 
     TextRendering_PrintString(window, buffer, 1.0f-(numchars + 1)*charwidth, 1.0f-lineheight, 1.0f);
 }
+
+unsigned int LoadSkyBox(std::vector<std::string> faces)
+{
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+
+    int width, height, nrChannels;
+    for (unsigned int i = 0; i < faces.size(); i++)
+    {
+        unsigned char *data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+        if (data)
+        {
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 
+                         0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
+            );
+            stbi_image_free(data);
+        }
+        else
+        {
+            std::cout << "Cubemap tex failed to load at path: " << faces[i] << std::endl;
+            stbi_image_free(data);
+        }
+    }
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    return textureID;
+}  
 
 // Função para debugging: imprime no terminal todas informações de um modelo
 // geométrico carregado de um arquivo ".obj".
