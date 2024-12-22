@@ -37,8 +37,6 @@ uniform sampler2D TextureImage2;
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
 out vec4 color;
 
-uniform samplerCube skybox;
-
 // Constantes
 #define M_PI   3.14159265358979323846
 #define M_PI_2 1.57079632679489661923
@@ -127,22 +125,20 @@ void main()
         U = texcoords.x;
         V = texcoords.y;
     }
-
     else if ( object_id == ISLAND )
-{
-    // Projeção planar XY para a ilha em coordenadas do modelo.
-    // Assumindo bbox_min e bbox_max já configurados para a ilha.
-    float minx = bbox_min.x;
-    float maxx = bbox_max.x;
+    {
+        // Projeção planar XY para a ilha em coordenadas do modelo.
+        // Assumindo bbox_min e bbox_max já configurados para a ilha.
+        float minx = bbox_min.x;
+        float maxx = bbox_max.x;
 
-    float miny = bbox_min.y;
-    float maxy = bbox_max.y;
+        float miny = bbox_min.y;
+        float maxy = bbox_max.y;
 
-    // Normalização das coordenadas U e V no intervalo [0,1]
-    U = (position_model.x - minx) / (maxx - minx);
-    V = (position_model.y - miny) / (maxy - miny);
-}
-
+        // Normalização das coordenadas U e V no intervalo [0,1]
+        U = (position_model.x - minx) / (maxx - minx);
+        V = (position_model.y - miny) / (maxy - miny);
+    } 
 
     // Obtemos a refletância difusa a partir da leitura da imagem TextureImage0
     vec3 Kd0 = texture(TextureImage0, vec2(U,V)).rgb;
@@ -177,19 +173,9 @@ void main()
     //    suas distâncias para a câmera (desenhando primeiro objetos
     //    transparentes que estão mais longe da câmera).
     // Alpha default = 1 = 100% opaco = 0% transparente
-    //color.a = 1;
+    color.a = 1;
 
     // Cor final com correção gamma, considerando monitor sRGB.
     // Veja https://en.wikipedia.org/w/index.php?title=Gamma_correction&oldid=751281772#Windows.2C_Mac.2C_sRGB_and_TV.2Fvideo_standard_gammas
-    //color.rgb = pow(color.rgb, vec3(1.0,1.0,1.0)/2.2);
-
-    if (object_id == 4) // Assuming 4 is the ID for the skybox
-    {
-        color = texture(skybox, texCoords);
-    }
-    else
-    {
-        color.a = 1.0;
-        color.rgb = pow(color.rgb, vec3(1.0, 1.0, 1.0) / 2.2); // Gamma correction
-    }
+    color.rgb = pow(color.rgb, vec3(1.0,1.0,1.0)/2.2);
 } 
