@@ -20,6 +20,7 @@ uniform mat4 projection;
 
 // Identificador que define qual objeto está sendo desenhado no momento
 #define ISLAND 0
+#define PLAYER 1
 uniform int object_id;
 
 // Parâmetros da axis-aligned bounding box (AABB) do modelo
@@ -67,6 +68,12 @@ void main()
 
 
     if ( object_id == ISLAND )
+{
+        U = texcoords.x;
+        V = texcoords.y;
+}
+
+if ( object_id == PLAYER )
 {
         U = texcoords.x;
         V = texcoords.y;

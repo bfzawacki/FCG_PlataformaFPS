@@ -314,6 +314,10 @@ int main(int argc, char* argv[])
     ComputeNormals(&islandmodel);
     BuildTrianglesAndAddToVirtualScene(&islandmodel);
 
+    ObjModel playermodel("../../data/player.obj");
+    ComputeNormals(&playermodel);
+    BuildTrianglesAndAddToVirtualScene(&playermodel);
+
     if ( argc > 1 )
     {
         ObjModel model(argv[1]);
@@ -332,7 +336,10 @@ int main(int argc, char* argv[])
     glFrontFace(GL_CCW);
 
     // Inicialização da posição e orientação da câmera
-    glm::vec4 camera_position_c  = glm::vec4(4.0f,0.0f,4.0f,1.0f); // Ponto "c", centro da câmera
+    glm::vec4 camera_position_c  = glm::vec4(5.0f,12.0f,-5.0f,1.0f); // Ponto "c", centro da câmera
+
+    // Inicialização da posição do jogador
+    glm::vec3 player_position = glm::vec3(5.0f, 3.0f, -3.0f);
 
     // Ficamos em um loop infinito, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
@@ -383,26 +390,33 @@ int main(int argc, char* argv[])
         float timeDiff = actFrame - prevFrame;
         prevFrame = actFrame;
 
+
         // Modificação dos parâmetros da câmera ao pressionarmos qualquer tecla de movimentação
+        glm::vec3 w_direction = glm::normalize(glm::vec3(w.x, w.y, w.z));
+        glm::vec3 u_direction = glm::normalize(glm::vec3(u.x, u.y, u.z));
+
         if (forward) {
-            w = w/norm(w);
-            camera_position_c += -w * 5.0f * timeDiff;
+            camera_position_c += glm::vec4(-w_direction * 10.0f * timeDiff, 0.0f);
+            player_position = glm::vec3(camera_position_c.x, camera_position_c.y - 9.0, camera_position_c.z - 1);
         }
 
         if (backward) {
-            w = w/norm(w);
-            camera_position_c += w * 5.0f * timeDiff;
-            }
+            camera_position_c += glm::vec4(w_direction * 10.0f * timeDiff, 0.0f);
+            player_position = glm::vec3(camera_position_c.x, camera_position_c.y - 9.0, camera_position_c.z - 1);
+        }
 
         if (left) {
-            u = u/norm(u);
-            camera_position_c += -u * 5.0f * timeDiff;
+            camera_position_c += glm::vec4(-u_direction * 10.0f * timeDiff, 0.0f);
+            player_position = glm::vec3(camera_position_c.x, camera_position_c.y - 9.0, camera_position_c.z - 1);
         }
 
         if (right) {
-            u = u/norm(u);
-            camera_position_c += u * 5.0f * timeDiff;
+            camera_position_c += glm::vec4(u_direction * 10.0f * timeDiff, 0.0f);
+            player_position = glm::vec3(camera_position_c.x, camera_position_c.y - 9.0, camera_position_c.z - 1);
         }
+
+
+        
 
         // Computamos a matriz "View" utilizando os parâmetros da câmera para
         // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
@@ -446,14 +460,22 @@ int main(int argc, char* argv[])
         glUniformMatrix4fv(g_projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
 
         #define ISLAND 0
+        #define PLAYER 1
 
 
         //Desenhamos o modelo da ilha
         model = Matrix_Translate(0.0f,0.0f,0.0f)
-            * Matrix_Scale(10.0f, 10.0f, 10.0f);
+            * Matrix_Scale(30.0f, 30.0f, 30.0f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, ISLAND);
         DrawVirtualObject("the_island");
+
+
+        model = Matrix_Translate(player_position.x, player_position.y, player_position.z)
+            * Matrix_Scale(0.5f, 0.5f, 0.5f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, PLAYER);
+        DrawVirtualObject("the_player");
 
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
         // terceiro cubo.
