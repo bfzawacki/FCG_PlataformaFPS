@@ -15,6 +15,7 @@
 //  vira
 //    #include <cstdio> // Em C++
 //
+#include <iostream>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -123,6 +124,7 @@ GLuint LoadShader_Fragment(const char* filename); // Carrega um fragment shader
 void LoadShader(const char* filename, GLuint shader_id); // Função utilizada pelas duas acima
 GLuint CreateGpuProgram(GLuint vertex_shader_id, GLuint fragment_shader_id); // Cria um programa de GPU
 void PrintObjModelInfo(ObjModel*); // Função para debugging
+void DrawBoundingBox(const glm::vec3& bbox_min, const glm::vec3& bbox_max); // Desenha uma bounding box
 
 // Declaração de funções auxiliares para renderizar texto dentro da janela
 // OpenGL. Estas funções estão definidas no arquivo "textrendering.cpp".
@@ -307,7 +309,7 @@ int main(int argc, char* argv[])
     LoadShadersFromFiles();
 
     // Carregamos duas imagens para serem utilizadas como textura
-    LoadTextureImage("../../data/Floating_Island_Seren_1216154845_texture.png"); // TextureImage0
+    LoadTextureImage("../../data/texture_island.png"); // TextureImage0
 
 
     ObjModel islandmodel("../../data/island.obj");
@@ -339,7 +341,15 @@ int main(int argc, char* argv[])
     glm::vec4 camera_position_c  = glm::vec4(5.0f,12.0f,-5.0f,1.0f); // Ponto "c", centro da câmera
 
     // Inicialização da posição do jogador
-    glm::vec3 player_position = glm::vec3(5.0f, 3.0f, -3.0f);
+    glm::vec3 player_position = glm::vec3(camera_position_c.x, camera_position_c.y - 9.0f, camera_position_c.z - 1.0f);
+
+    // Inicialização da posição da ilha
+    glm::vec3 island_position = glm::vec3(0.0f, 0.0f, 0.0f);
+
+    std::map<std::string, glm::vec3> object_position;
+    object_position["the_island"] = island_position;
+    object_position["the_player"] = player_position;
+
 
     // Ficamos em um loop infinito, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
@@ -397,26 +407,24 @@ int main(int argc, char* argv[])
 
         if (forward) {
             camera_position_c += glm::vec4(-w_direction * 10.0f * timeDiff, 0.0f);
-            player_position = glm::vec3(camera_position_c.x, camera_position_c.y - 9.0, camera_position_c.z - 1);
+            player_position = glm::vec3(camera_position_c.x, camera_position_c.y - 9.0f, camera_position_c.z - 1.0f);
         }
 
         if (backward) {
             camera_position_c += glm::vec4(w_direction * 10.0f * timeDiff, 0.0f);
-            player_position = glm::vec3(camera_position_c.x, camera_position_c.y - 9.0, camera_position_c.z - 1);
+            player_position = glm::vec3(camera_position_c.x, camera_position_c.y - 9.0f, camera_position_c.z - 1.0f);
         }
 
         if (left) {
             camera_position_c += glm::vec4(-u_direction * 10.0f * timeDiff, 0.0f);
-            player_position = glm::vec3(camera_position_c.x, camera_position_c.y - 9.0, camera_position_c.z - 1);
+            player_position = glm::vec3(camera_position_c.x, camera_position_c.y - 9.0f, camera_position_c.z - 1.0f);
         }
 
         if (right) {
             camera_position_c += glm::vec4(u_direction * 10.0f * timeDiff, 0.0f);
-            player_position = glm::vec3(camera_position_c.x, camera_position_c.y - 9.0, camera_position_c.z - 1);
+            player_position = glm::vec3(camera_position_c.x, camera_position_c.y - 9.0f, camera_position_c.z - 1.0f);
         }
-
-
-        
+     
 
         // Computamos a matriz "View" utilizando os parâmetros da câmera para
         // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
@@ -464,7 +472,7 @@ int main(int argc, char* argv[])
 
 
         //Desenhamos o modelo da ilha
-        model = Matrix_Translate(0.0f,0.0f,0.0f)
+        model = Matrix_Translate(island_position.x,island_position.y,island_position.z)
             * Matrix_Scale(30.0f, 30.0f, 30.0f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, ISLAND);
@@ -476,6 +484,36 @@ int main(int argc, char* argv[])
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, PLAYER);
         DrawVirtualObject("the_player");
+
+        // Calcular os limites da bounding box do jogador
+        glm::vec3 player_bbox_min = g_VirtualScene["the_player"].bbox_min + player_position;
+        glm::vec3 player_bbox_max = g_VirtualScene["the_player"].bbox_max + player_position;
+
+        // Verificar as coordenadas da bounding box do jogador
+        std::cout << "Player bounding box min: (" << player_bbox_min.x << ", " << player_bbox_min.y << ", " << player_bbox_min.z << ")" << std::endl;
+        //std::cout << "Player bounding box max: (" << player_bbox_max.x << ", " << player_bbox_max.y << ", " << player_bbox_max.z << ")" << std::endl;
+
+        
+        // Definir a cor para a bounding box do jogador (azul)
+        glColor3f(0.0f, 0.0f, 1.0f);
+
+        
+        // Desenhar a bounding box do jogador
+        DrawBoundingBox(player_bbox_min, player_bbox_max);
+
+        // Calcular os limites da bounding box da ilha
+        glm::vec3 island_bbox_min = g_VirtualScene["the_island"].bbox_min;
+        glm::vec3 island_bbox_max = g_VirtualScene["the_island"].bbox_max;
+
+        // Verificar as coordenadas da bounding box da ilha
+        //std::cout << "Island bounding box min: (" << island_bbox_min.x << ", " << island_bbox_min.y << ", " << island_bbox_min.z << ")" << std::endl;
+        //std::cout << "Island bounding box max: (" << island_bbox_max.x << ", " << island_bbox_max.y << ", " << island_bbox_max.z << ")" << std::endl;
+
+        // Definir a cor para a bounding box da ilha (vermelho)
+        glColor3f(1.0f, 0.0f, 0.0f);
+
+        // Desenhar a bounding box da ilha
+        DrawBoundingBox(island_bbox_min, island_bbox_max);
 
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
         // terceiro cubo.
@@ -509,6 +547,59 @@ int main(int argc, char* argv[])
     // Fim do programa
     return 0;
 }
+
+
+
+    void DrawBoundingBox(const glm::vec3& bbox_min, const glm::vec3& bbox_max)
+{
+    // Vértices da bounding box
+    glm::vec3 v0 = bbox_min;
+    glm::vec3 v1 = glm::vec3(bbox_max.x, bbox_min.y, bbox_min.z);
+    glm::vec3 v2 = glm::vec3(bbox_max.x, bbox_max.y, bbox_min.z);
+    glm::vec3 v3 = glm::vec3(bbox_min.x, bbox_max.y, bbox_min.z);
+    glm::vec3 v4 = glm::vec3(bbox_min.x, bbox_min.y, bbox_max.z);
+    glm::vec3 v5 = glm::vec3(bbox_max.x, bbox_min.y, bbox_max.z);
+    glm::vec3 v6 = bbox_max;
+    glm::vec3 v7 = glm::vec3(bbox_min.x, bbox_max.y, bbox_max.z);
+
+    // Desenho com GL_LINES
+    glBegin(GL_LINES);
+        // Base inferior
+        glVertex3f(v0.x, v0.y, v0.z); glVertex3f(v1.x, v1.y, v1.z);
+        glVertex3f(v1.x, v1.y, v1.z); glVertex3f(v5.x, v5.y, v5.z);
+        glVertex3f(v5.x, v5.y, v5.z); glVertex3f(v4.x, v4.y, v4.z);
+        glVertex3f(v4.x, v4.y, v4.z); glVertex3f(v0.x, v0.y, v0.z);
+
+        // Base superior
+        glVertex3f(v3.x, v3.y, v3.z); glVertex3f(v2.x, v2.y, v2.z);
+        glVertex3f(v2.x, v2.y, v2.z); glVertex3f(v6.x, v6.y, v6.z);
+        glVertex3f(v6.x, v6.y, v6.z); glVertex3f(v7.x, v7.y, v7.z);
+        glVertex3f(v7.x, v7.y, v7.z); glVertex3f(v3.x, v3.y, v3.z);
+
+        // Conectando as bases
+        glVertex3f(v0.x, v0.y, v0.z); glVertex3f(v3.x, v3.y, v3.z);
+        glVertex3f(v1.x, v1.y, v1.z); glVertex3f(v2.x, v2.y, v2.z);
+        glVertex3f(v5.x, v5.y, v5.z); glVertex3f(v6.x, v6.y, v6.z);
+        glVertex3f(v4.x, v4.y, v4.z); glVertex3f(v7.x, v7.y, v7.z);
+    glEnd();
+}
+
+// Função que checa colisão entre dois objetos (AABB)
+bool CheckCollisionAABB(const SceneObject& obj1, const glm::vec3& position1,
+                        const SceneObject& obj2, const glm::vec3& position2)
+{
+    glm::vec3 obj1_min = obj1.bbox_min + position1;
+    glm::vec3 obj1_max = obj1.bbox_max + position1;
+
+    glm::vec3 obj2_min = obj2.bbox_min + position2;
+    glm::vec3 obj2_max = obj2.bbox_max + position2;
+
+    // Checa sobreposição em cada eixo
+    return (obj1_min.x <= obj2_max.x && obj1_max.x >= obj2_min.x) &&
+           (obj1_min.y <= obj2_max.y && obj1_max.y >= obj2_min.y) &&
+           (obj1_min.z <= obj2_max.z && obj1_max.z >= obj2_min.z);
+}
+
 
 // Função que carrega uma imagem para ser utilizada como textura
 void LoadTextureImage(const char* filename)
