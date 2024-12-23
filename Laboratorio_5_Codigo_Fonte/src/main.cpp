@@ -311,7 +311,6 @@ int main(int argc, char* argv[])
     // Carregamos duas imagens para serem utilizadas como textura
     LoadTextureImage("../../data/texture_island.png"); // TextureImage0
 
-
     ObjModel islandmodel("../../data/island.obj");
     ComputeNormals(&islandmodel);
     BuildTrianglesAndAddToVirtualScene(&islandmodel);
@@ -338,10 +337,10 @@ int main(int argc, char* argv[])
     glFrontFace(GL_CCW);
 
     // Inicialização da posição e orientação da câmera
-    glm::vec4 camera_position_c  = glm::vec4(5.0f,12.0f,-5.0f,1.0f); // Ponto "c", centro da câmera
+    glm::vec4 camera_position_c = glm::vec4(5.0f,12.0f,-5.0f,1.0f); // Ponto "c", centro da câmera
 
     // Inicialização da posição do jogador
-    glm::vec3 player_position = glm::vec3(camera_position_c.x, camera_position_c.y - 9.0f, camera_position_c.z - 1.0f);
+    glm::vec4 player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 9.0f, camera_position_c.z - 1.0f, 1.0f);
 
     // Inicialização da posição da ilha
     glm::vec3 island_position = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -400,29 +399,24 @@ int main(int argc, char* argv[])
         float timeDiff = actFrame - prevFrame;
         prevFrame = actFrame;
 
-
-        // Modificação dos parâmetros da câmera ao pressionarmos qualquer tecla de movimentação
-        glm::vec3 w_direction = glm::normalize(glm::vec3(w.x, w.y, w.z));
-        glm::vec3 u_direction = glm::normalize(glm::vec3(u.x, u.y, u.z));
-
         if (forward) {
-            camera_position_c += glm::vec4(-w_direction * 10.0f * timeDiff, 0.0f);
-            player_position = glm::vec3(camera_position_c.x, camera_position_c.y - 9.0f, camera_position_c.z - 1.0f);
+            camera_position_c += -w * 5.0f * timeDiff;
+            player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 9.0f, camera_position_c.z - 1.0f, 1.0f);
         }
 
         if (backward) {
-            camera_position_c += glm::vec4(w_direction * 10.0f * timeDiff, 0.0f);
-            player_position = glm::vec3(camera_position_c.x, camera_position_c.y - 9.0f, camera_position_c.z - 1.0f);
+            camera_position_c += w * 5.0f * timeDiff;
+            player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 9.0f, camera_position_c.z - 1.0f, 1.0f);
         }
 
         if (left) {
-            camera_position_c += glm::vec4(-u_direction * 10.0f * timeDiff, 0.0f);
-            player_position = glm::vec3(camera_position_c.x, camera_position_c.y - 9.0f, camera_position_c.z - 1.0f);
+            camera_position_c += -u * 5.0f * timeDiff;
+            player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 9.0f, camera_position_c.z - 1.0f, 1.0f);
         }
 
         if (right) {
-            camera_position_c += glm::vec4(u_direction * 10.0f * timeDiff, 0.0f);
-            player_position = glm::vec3(camera_position_c.x, camera_position_c.y - 9.0f, camera_position_c.z - 1.0f);
+            camera_position_c += u * 5.0f * timeDiff, 0.0f;
+            player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 9.0f, camera_position_c.z - 1.0f, 1.0f);
         }
      
 
@@ -470,7 +464,6 @@ int main(int argc, char* argv[])
         #define ISLAND 0
         #define PLAYER 1
 
-
         //Desenhamos o modelo da ilha
         model = Matrix_Translate(island_position.x,island_position.y,island_position.z)
             * Matrix_Scale(30.0f, 30.0f, 30.0f);
@@ -480,14 +473,15 @@ int main(int argc, char* argv[])
 
 
         model = Matrix_Translate(player_position.x, player_position.y, player_position.z)
+            * Matrix_Rotate_Y(g_CameraTheta)
             * Matrix_Scale(0.5f, 0.5f, 0.5f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, PLAYER);
         DrawVirtualObject("the_player");
 
         // Calcular os limites da bounding box do jogador
-        glm::vec3 player_bbox_min = g_VirtualScene["the_player"].bbox_min + player_position;
-        glm::vec3 player_bbox_max = g_VirtualScene["the_player"].bbox_max + player_position;
+        glm::vec3 player_bbox_min = g_VirtualScene["the_player"].bbox_min + glm::vec3(player_position);
+        glm::vec3 player_bbox_max = g_VirtualScene["the_player"].bbox_max + glm::vec3(player_position);
 
         // Verificar as coordenadas da bounding box do jogador
         std::cout << "Player bounding box min: (" << player_bbox_min.x << ", " << player_bbox_min.y << ", " << player_bbox_min.z << ")" << std::endl;
