@@ -229,6 +229,12 @@ GLint g_object_id_uniform;
 GLint g_bbox_min_uniform;
 GLint g_bbox_max_uniform;
 
+// Variável que controla se a cutscene está ativa ou não
+bool g_IsCutsceneActive = true;
+
+// Variável view que define a matriz de modelagem da câmera
+glm::mat4 view;
+
 // Número de texturas carregadas pela função LoadTextureImage()
 GLuint g_NumLoadedTextures = 0;
 
@@ -305,10 +311,9 @@ int main(int argc, char* argv[])
 
     // Carregamos os shaders de vértices e de fragmentos que serão utilizados
     // para renderização. Veja slides 180-200 do documento Aula_03_Rendering_Pipeline_Grafico.pdf.
-    //
     LoadShadersFromFiles();
 
-    // Carregamos duas imagens para serem utilizadas como textura
+    // Carregamos imagens para serem utilizadas como textura
     LoadTextureImage("../../data/texture_island.png"); // TextureImage0
 
     ObjModel islandmodel("../../data/island.obj");
@@ -336,14 +341,15 @@ int main(int argc, char* argv[])
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
 
-    // Inicialização da posição e orientação da câmera
+    // Inicialização da posição e orientação da free camera e lookat camera 
     glm::vec4 camera_position_c = glm::vec4(5.0f,12.0f,-5.0f,1.0f); // Ponto "c", centro da câmera
+    glm::vec4 cam_pos_lookat = glm::vec4(5.0f,12.0f,-5.0f,1.0f);
 
     // Inicialização da posição do jogador
-    glm::vec4 player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 9.0f, camera_position_c.z - 1.0f, 1.0f);
+    glm::vec4 player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 5.0f, camera_position_c.z - 5.0f, 1.0f);
 
     // Inicialização da posição da ilha
-    glm::vec3 island_position = glm::vec3(0.0f, 0.0f, 0.0f);
+    glm::vec4 island_position = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
     std::map<std::string, glm::vec3> object_position;
     object_position["the_island"] = island_position;
@@ -382,48 +388,50 @@ int main(int argc, char* argv[])
 
         // Abaixo definimos as varáveis que efetivamente definem a câmera virtual.
         // Veja slides 195-227 e 229-234 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
-        glm::vec4 camera_lookat_l    = glm::vec4(0.0f,0.0f,0.0f,1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando
+        glm::vec4 camera_lookat_l    = player_position; // Ponto "l", para onde a câmera (look-at) estará sempre olhando
         glm::vec4 camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
 
-        //CÂMERA DE PONTO FIXO
-        glm::vec4 camera_lookat_view_vector = camera_lookat_l - camera_position_c; // Vetor "view", sentido para onde a câmera está virada
-        //CÂMERA LIVRE
-        glm::vec4 camera_free_view_vector = glm::vec4(x,y,z,0.0f); // Vetor "view", sentido para onde a câmera está virada
-        glm::vec4 w = -camera_free_view_vector;
-        glm::vec4 u = crossproduct(camera_up_vector, w);
+        if (!g_IsCutsceneActive) {
+            //CÂMERA LIVRE
+            glm::vec4 camera_free_view_vector = glm::vec4(x,y,z,0.0f); // Vetor "view", sentido para onde a câmera está virada
+            glm::vec4 w = -camera_free_view_vector;
+            glm::vec4 u = crossproduct(camera_up_vector, w);
 
-        //Tempo do frame atual
-        float actFrame = (float)glfwGetTime();
+            //Tempo do frame atual
+            float actFrame = (float)glfwGetTime();
 
-        //Variação de tempo
-        float timeDiff = actFrame - prevFrame;
-        prevFrame = actFrame;
+            //Variação de tempo
+            float timeDiff = actFrame - prevFrame;
+            prevFrame = actFrame;
 
-        if (forward) {
-            camera_position_c += -w * 5.0f * timeDiff;
-            player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 9.0f, camera_position_c.z - 1.0f, 1.0f);
+            if (forward) {
+                camera_position_c += -w * 5.0f * timeDiff;
+                player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 5.0f, camera_position_c.z - 5.0f, 1.0f);
+            }
+
+            if (backward) {
+                camera_position_c += w * 5.0f * timeDiff;
+                player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 5.0f, camera_position_c.z - 5.0f, 1.0f);
+            }
+
+            if (left) {
+                camera_position_c += -u * 5.0f * timeDiff;
+                player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 5.0f, camera_position_c.z - 5.0f, 1.0f);
+            }
+
+            if (right) {
+                camera_position_c += u * 5.0f * timeDiff, 0.0f;
+                player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 5.0f, camera_position_c.z - 5.0f, 1.0f);
+            }
+
+            // Computamos a matriz "View" utilizando os parâmetros da câmera para
+            // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
+            view = Matrix_Camera_View(camera_position_c, camera_free_view_vector, camera_up_vector);
+        } else {
+            //CÂMERA DE PONTO FIXO (usada para a cutscene)
+            glm::vec4 camera_lookat_view_vector = camera_lookat_l - camera_position_c; // Vetor "view", sentido para onde a câmera está virada
+            view = Matrix_Camera_View(cam_pos_lookat, camera_lookat_view_vector, camera_up_vector);
         }
-
-        if (backward) {
-            camera_position_c += w * 5.0f * timeDiff;
-            player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 9.0f, camera_position_c.z - 1.0f, 1.0f);
-        }
-
-        if (left) {
-            camera_position_c += -u * 5.0f * timeDiff;
-            player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 9.0f, camera_position_c.z - 1.0f, 1.0f);
-        }
-
-        if (right) {
-            camera_position_c += u * 5.0f * timeDiff, 0.0f;
-            player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 9.0f, camera_position_c.z - 1.0f, 1.0f);
-        }
-     
-
-        // Computamos a matriz "View" utilizando os parâmetros da câmera para
-        // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
-        glm::mat4 view = Matrix_Camera_View(camera_position_c, camera_free_view_vector, camera_up_vector);
-
         // Agora computamos a matriz de Projeção.
         glm::mat4 projection;
 
@@ -473,8 +481,8 @@ int main(int argc, char* argv[])
 
 
         model = Matrix_Translate(player_position.x, player_position.y, player_position.z)
-            * Matrix_Rotate_Y(g_CameraTheta)
-            * Matrix_Scale(0.5f, 0.5f, 0.5f);
+            * (g_IsCutsceneActive ? Matrix_Identity() : Matrix_Rotate_Y(g_CameraTheta))
+            * Matrix_Scale(0.2f, 0.2f, 0.2f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, PLAYER);
         DrawVirtualObject("the_player");
@@ -487,10 +495,8 @@ int main(int argc, char* argv[])
         std::cout << "Player bounding box min: (" << player_bbox_min.x << ", " << player_bbox_min.y << ", " << player_bbox_min.z << ")" << std::endl;
         //std::cout << "Player bounding box max: (" << player_bbox_max.x << ", " << player_bbox_max.y << ", " << player_bbox_max.z << ")" << std::endl;
 
-        
         // Definir a cor para a bounding box do jogador (azul)
         glColor3f(0.0f, 0.0f, 1.0f);
-
         
         // Desenhar a bounding box do jogador
         DrawBoundingBox(player_bbox_min, player_bbox_max);
@@ -541,8 +547,6 @@ int main(int argc, char* argv[])
     // Fim do programa
     return 0;
 }
-
-
 
     void DrawBoundingBox(const glm::vec3& bbox_min, const glm::vec3& bbox_max)
 {
