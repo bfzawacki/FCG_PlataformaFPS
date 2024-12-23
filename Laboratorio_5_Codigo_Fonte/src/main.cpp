@@ -124,6 +124,7 @@ void LoadShader(const char* filename, GLuint shader_id); // Função utilizada p
 GLuint CreateGpuProgram(GLuint vertex_shader_id, GLuint fragment_shader_id); // Cria um programa de GPU
 void PrintObjModelInfo(ObjModel*); // Função para debugging
 unsigned int LoadSkyBox(std::vector<std::string> faces);
+void CheckCubemapTexture(unsigned int cubemapTextureID);
 
 // Declaração de funções auxiliares para renderizar texto dentro da janela
 // OpenGL. Estas funções estão definidas no arquivo "textrendering.cpp".
@@ -413,6 +414,7 @@ int main(int argc, char* argv[])
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     unsigned int skyBoxTexture = LoadSkyBox(facesCubemap);
+    CheckCubemapTexture(skyBoxTexture);
 
     if (glIsTexture(skyBoxTexture)) {
         std::cout << "Cube map texture is valid." << std::endl;
@@ -431,7 +433,7 @@ int main(int argc, char* argv[])
         // Conversaremos sobre sistemas de cores nas aulas de Modelos de Iluminação.
         //
         //           R     G     B     A
-        //glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
+        //glClearColor(0.0f, 1.0f, 1.0f, 1.0f);
 
         // "Pintamos" todos os pixels do framebuffer com a cor definida acima,
         // e também resetamos todos os pixels do Z-buffer (depth buffer).
@@ -531,14 +533,14 @@ int main(int argc, char* argv[])
 
         glUseProgram(0);
 
-        // Desenhando a skybox
+        //Desenhando a skybox
         glDepthFunc(GL_LEQUAL);
 
         glUseProgram(g_SkyboxGpuProgramID);
         glm::mat4 skyboxView = glm::mat4(1.0f);
         glm::mat4 skyboxProjection = glm::mat4(1.0f);
-        skyboxView = glm::mat4(glm::mat3(glm::lookAt(glm::vec3(camera_position_c), glm::vec3(camera_position_c) + glm::vec3(camera_free_view_vector), glm::vec3(camera_up_vector))));
-        skyboxProjection = glm::perspective(field_of_view, g_ScreenRatio, 0.1f, 100.0f);
+        skyboxView = glm::mat4(glm::mat3(view));// (glm::lookAt(glm::vec3(camera_position_c), glm::vec3(camera_position_c) + glm::vec3(camera_free_view_vector), glm::vec3(camera_up_vector))));
+        skyboxProjection = Matrix_Perspective(field_of_view, g_ScreenRatio, 0.1f, 50.0f);//glm::perspective(field_of_view, g_ScreenRatio, 0.1f, 50.0f);
         glUniformMatrix4fv(glGetUniformLocation(g_SkyboxGpuProgramID, "view"), 1 , GL_FALSE , glm::value_ptr(skyboxView));
         glUniformMatrix4fv(glGetUniformLocation(g_SkyboxGpuProgramID, "projection"), 1 , GL_FALSE , glm::value_ptr(skyboxProjection));
 
@@ -546,11 +548,15 @@ int main(int argc, char* argv[])
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_CUBE_MAP, skyBoxTexture);
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-        glGetError();
+        GLenum err = glGetError();
+        if (err != GL_NO_ERROR) {
+            std::cerr << "OpenGL error: " << err << std::endl;
+        }        
         glBindVertexArray(0);
 
         glDepthFunc(GL_LESS);
         glUseProgram(0);
+
 
         glUseProgram(g_GpuProgramID);
 
@@ -731,8 +737,8 @@ void LoadShadersFromFiles()
     //
     GLuint vertex_shader_id = LoadShader_Vertex("../../src/shader_vertex.glsl");
     GLuint fragment_shader_id = LoadShader_Fragment("../../src/shader_fragment.glsl");
-    GLuint skybox_vertshader_id = LoadShader_Vertex("../../src/skybox.vert");
-    GLuint skybox_fragshader_id = LoadShader_Fragment("../../src/skybox.frag");
+    GLuint skybox_vertshader_id = LoadShader_Vertex("../../src/skybox_vert.glsl");
+    GLuint skybox_fragshader_id = LoadShader_Fragment("../../src/skybox_frag.glsl");
 
     // Deletamos o programa de GPU anterior, caso ele exista.
     if ( g_GpuProgramID != 0 )
@@ -1769,3 +1775,46 @@ void PrintObjModelInfo(ObjModel* model)
 // set makeprg=cd\ ..\ &&\ make\ run\ >/dev/null
 // vim: set spell spelllang=pt_br :
 
+
+
+void CheckCubemapTexture(unsigned int cubemapTextureID)
+{
+    glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTextureID);
+
+    // Array of face names for logging purposes
+    const char* faceNames[] = {
+        "GL_TEXTURE_CUBE_MAP_POSITIVE_X",
+        "GL_TEXTURE_CUBE_MAP_NEGATIVE_X",
+        "GL_TEXTURE_CUBE_MAP_POSITIVE_Y",
+        "GL_TEXTURE_CUBE_MAP_NEGATIVE_Y",
+        "GL_TEXTURE_CUBE_MAP_POSITIVE_Z",
+        "GL_TEXTURE_CUBE_MAP_NEGATIVE_Z"
+    };
+
+    bool isLoaded = true;
+
+    // Check all 6 faces
+    for (int i = 0; i < 6; ++i)
+    {
+        GLint width = 0, height = 0;
+        glGetTexLevelParameteriv(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_TEXTURE_WIDTH, &width);
+        glGetTexLevelParameteriv(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_TEXTURE_HEIGHT, &height);
+
+        if (width == 0 || height == 0)
+        {
+            std::cout << faceNames[i] << " is not loaded correctly." << std::endl;
+            isLoaded = false;
+        }
+        else
+        {
+            std::cout << faceNames[i] << " is loaded with size: " << width << "x" << height << std::endl;
+        }
+    }
+
+    if (isLoaded)
+        std::cout << "Cubemap texture is loaded successfully!" << std::endl;
+    else
+        std::cout << "Error: Cubemap texture faces are missing or invalid!" << std::endl;
+
+    glBindTexture(GL_TEXTURE_CUBE_MAP, 0); // Unbind texture
+}
