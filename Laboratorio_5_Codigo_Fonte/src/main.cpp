@@ -355,10 +355,10 @@ int main(int argc, char* argv[])
     object_position["the_island"] = island_position;
     object_position["the_player"] = player_position;
 
-    // CUTSCENE
+    // CUTSCENE 
     float t = 0;  //variável usada para controlar a construção da curva de Bézier
 
-    // Loop da cutscene
+    // Loop da cutscene (comentários que se repetem no loop principal do jogo foram removidos)
     while(g_IsCutsceneActive)
     {
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -372,9 +372,10 @@ int main(int argc, char* argv[])
         float z = r*cos(g_CameraPhi)*cos(g_CameraTheta);
         float x = r*cos(g_CameraPhi)*sin(g_CameraTheta);
 
-        glm::vec4 camera_lookat_l    = player_position; // Ponto "l", para onde a câmera (look-at) estará sempre olhando
-        glm::vec4 camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
+        glm::vec4 camera_lookat_l  = player_position; 
+        glm::vec4 camera_up_vector = glm::vec4(0.0f,1.0f,0.0f,0.0f); 
 
+        // Definição dos pontos da curva de Bézier
         glm::vec4 p1 = cam_pos_lookat;
         glm::vec4 p2 = glm::vec4(player_position.x - 13, player_position.y + 9, player_position.z + 2, 1.0f);
         glm::vec4 p3 = glm::vec4(player_position.x - 3, player_position.y - 2 , player_position.z - 3, 1.0f);
@@ -382,11 +383,13 @@ int main(int argc, char* argv[])
         glm::vec4 newPos;
 
         if(t <= 1) {
+            // Cálculo dos pontos que compõem a curva de Bézier
             newPos.x = (pow((1-t), 3) * p1.x) + (((3 * t) * pow((1 - t), 2)) * p2.x) + ((pow((3 * t), 2) * (1-t)) * p3.x) + (pow(t, 3) * p4.x);
             newPos.y = (pow((1-t), 3) * p1.y) + (((3 * t) * pow((1 - t), 2)) * p2.y) + ((pow((3 * t), 2) * (1-t)) * p3.y) + (pow(t, 3) * p4.y);
             newPos.z = (pow((1-t), 3) * p1.z) + (((3 * t) * pow((1 - t), 2)) * p2.z) + ((pow((3 * t), 2) * (1-t)) * p3.z) + (pow(t, 3) * p4.z);
             newPos.w = 1.0f;
 
+            // Ajuste da posição da câmera com os novos valores
             view = Matrix_Camera_View(newPos, camera_lookat_l - newPos, camera_up_vector);
             glUniformMatrix4fv(g_view_uniform, 1, GL_FALSE, glm::value_ptr(view));
 
@@ -398,29 +401,22 @@ int main(int argc, char* argv[])
             g_IsCutsceneActive = false;
         }
 
-        // glm::vec4 camera_lookat_view_vector = camera_lookat_l - cam_pos_lookat; // Vetor "view", sentido para onde a câmera está virada
-        // view = Matrix_Camera_View(cam_pos_lookat, camera_lookat_view_vector, camera_up_vector);
-
         glm::mat4 projection;
 
-        float nearplane = -0.1f;  // Posição do "near plane"
-        float farplane  = -50.0f; // Posição do "far plane"
+        float nearplane = -0.1f; 
+        float farplane  = -50.0f; 
 
         float field_of_view = 3.141592 / 3.0f;
         projection = Matrix_Perspective(field_of_view, g_ScreenRatio, nearplane, farplane);
 
         glm::mat4 model = Matrix_Identity(); // Transformação identidade de modelagem
 
-        // Enviamos as matrizes "view" e "projection" para a placa de vídeo
-        // (GPU). Veja o arquivo "shader_vertex.glsl", onde estas são
-        // efetivamente aplicadas em todos os pontos.
         glUniformMatrix4fv(g_view_uniform       , 1 , GL_FALSE , glm::value_ptr(view));
         glUniformMatrix4fv(g_projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
 
         #define ISLAND 0
         #define PLAYER 1
 
-        //Desenhamos o modelo da ilha
         model = Matrix_Translate(island_position.x,island_position.y,island_position.z)
             * Matrix_Scale(30.0f, 30.0f, 30.0f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
@@ -433,30 +429,14 @@ int main(int argc, char* argv[])
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, PLAYER);
         DrawVirtualObject("the_player");
-
-        // Imprimimos na tela os ângulos de Euler que controlam a rotação do
-        // terceiro cubo.
         TextRendering_ShowEulerAngles(window);
 
-        // Imprimimos na informação sobre a matriz de projeção sendo utilizada.
         TextRendering_ShowProjection(window);
 
-        // Imprimimos na tela informação sobre o número de quadros renderizados
-        // por segundo (frames per second).
         TextRendering_ShowFramesPerSecond(window);
 
-        // O framebuffer onde OpenGL executa as operações de renderização não
-        // é o mesmo que está sendo mostrado para o usuário, caso contrário
-        // seria possível ver artefatos conhecidos como "screen tearing". A
-        // chamada abaixo faz a troca dos buffers, mostrando para o usuário
-        // tudo que foi renderizado pelas funções acima.
-        // Veja o link: https://en.wikipedia.org/w/index.php?title=Multiple_buffering&oldid=793452829#Double_buffering_in_computer_graphics
         glfwSwapBuffers(window);
 
-        // Verificamos com o sistema operacional se houve alguma interação do
-        // usuário (teclado, mouse, ...). Caso positivo, as funções de callback
-        // definidas anteriormente usando glfwSet*Callback() serão chamadas
-        // pela biblioteca GLFW.
         glfwPollEvents();
     }
 
