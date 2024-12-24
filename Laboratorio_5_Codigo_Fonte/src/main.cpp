@@ -343,7 +343,7 @@ int main(int argc, char* argv[])
 
     // Inicialização da posição e orientação da free camera e lookat camera 
     glm::vec4 camera_position_c = glm::vec4(5.0f,12.0f,-5.0f,1.0f); // Ponto "c", centro da câmera
-    glm::vec4 cam_pos_lookat = glm::vec4(5.0f,12.0f,-5.0f,1.0f);
+    glm::vec4 cam_pos_lookat = glm::vec4(10.0f,12.0f,-5.0f,1.0f);
 
     // Inicialização da posição do jogador
     glm::vec4 player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 5.0f, camera_position_c.z - 5.0f, 1.0f);
@@ -355,6 +355,107 @@ int main(int argc, char* argv[])
     object_position["the_island"] = island_position;
     object_position["the_player"] = player_position;
 
+    // CUTSCENE
+    float t = 0;  //variável usada para controlar a construção da curva de Bézier
+
+    // Loop da cutscene
+    while(g_IsCutsceneActive)
+    {
+        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        glUseProgram(g_GpuProgramID);
+
+        float r = g_CameraDistance;
+        float y = r*sin(g_CameraPhi);
+        float z = r*cos(g_CameraPhi)*cos(g_CameraTheta);
+        float x = r*cos(g_CameraPhi)*sin(g_CameraTheta);
+
+        glm::vec4 camera_lookat_l    = player_position; // Ponto "l", para onde a câmera (look-at) estará sempre olhando
+        glm::vec4 camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
+
+        glm::vec4 p1 = cam_pos_lookat;
+        glm::vec4 p2 = glm::vec4(player_position.x - 10, cam_pos_lookat.y, player_position.z, 1.0f);
+        glm::vec4 p3 = glm::vec4(player_position.x - 6, cam_pos_lookat.y, player_position.z, 1.0f);
+        glm::vec4 p4 = glm::vec4(-cam_pos_lookat.x, cam_pos_lookat.y, cam_pos_lookat.z, 1.0f);
+        glm::vec4 newPos;
+
+        if(t <= 1) {
+            newPos.x = (pow((1-t), 3) * p1.x) + (((3 * t) * pow((1 - t), 2)) * p2.x) + ((pow((3 * t), 2) * (1-t)) * p3.x) + (pow(t, 3) * p4.x);
+            newPos.y = (pow((1-t), 3) * p1.y) + (((3 * t) * pow((1 - t), 2)) * p2.y) + ((pow((3 * t), 2) * (1-t)) * p3.y) + (pow(t, 3) * p4.y);
+            newPos.z = (pow((1-t), 3) * p1.z) + (((3 * t) * pow((1 - t), 2)) * p2.z) + ((pow((3 * t), 2) * (1-t)) * p3.z) + (pow(t, 3) * p4.z);
+            newPos.w = 1.0f;
+
+            view = Matrix_Camera_View(newPos, camera_lookat_l - newPos, camera_up_vector);
+            glUniformMatrix4fv(g_view_uniform, 1, GL_FALSE, glm::value_ptr(view));
+
+            t = t + 0.001;
+        } else {
+            g_IsCutsceneActive = false;
+        }
+
+        // glm::vec4 camera_lookat_view_vector = camera_lookat_l - cam_pos_lookat; // Vetor "view", sentido para onde a câmera está virada
+        // view = Matrix_Camera_View(cam_pos_lookat, camera_lookat_view_vector, camera_up_vector);
+
+        glm::mat4 projection;
+
+        float nearplane = -0.1f;  // Posição do "near plane"
+        float farplane  = -50.0f; // Posição do "far plane"
+
+        float field_of_view = 3.141592 / 3.0f;
+        projection = Matrix_Perspective(field_of_view, g_ScreenRatio, nearplane, farplane);
+
+        glm::mat4 model = Matrix_Identity(); // Transformação identidade de modelagem
+
+        // Enviamos as matrizes "view" e "projection" para a placa de vídeo
+        // (GPU). Veja o arquivo "shader_vertex.glsl", onde estas são
+        // efetivamente aplicadas em todos os pontos.
+        glUniformMatrix4fv(g_view_uniform       , 1 , GL_FALSE , glm::value_ptr(view));
+        glUniformMatrix4fv(g_projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
+
+        #define ISLAND 0
+        #define PLAYER 1
+
+        //Desenhamos o modelo da ilha
+        model = Matrix_Translate(island_position.x,island_position.y,island_position.z)
+            * Matrix_Scale(30.0f, 30.0f, 30.0f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, ISLAND);
+        DrawVirtualObject("the_island");
+
+        model = Matrix_Translate(player_position.x, player_position.y, player_position.z)
+            * (g_IsCutsceneActive ? Matrix_Identity() : Matrix_Rotate_Y(g_CameraTheta))
+            * Matrix_Scale(0.2f, 0.2f, 0.2f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, PLAYER);
+        DrawVirtualObject("the_player");
+
+        // Imprimimos na tela os ângulos de Euler que controlam a rotação do
+        // terceiro cubo.
+        TextRendering_ShowEulerAngles(window);
+
+        // Imprimimos na informação sobre a matriz de projeção sendo utilizada.
+        TextRendering_ShowProjection(window);
+
+        // Imprimimos na tela informação sobre o número de quadros renderizados
+        // por segundo (frames per second).
+        TextRendering_ShowFramesPerSecond(window);
+
+        // O framebuffer onde OpenGL executa as operações de renderização não
+        // é o mesmo que está sendo mostrado para o usuário, caso contrário
+        // seria possível ver artefatos conhecidos como "screen tearing". A
+        // chamada abaixo faz a troca dos buffers, mostrando para o usuário
+        // tudo que foi renderizado pelas funções acima.
+        // Veja o link: https://en.wikipedia.org/w/index.php?title=Multiple_buffering&oldid=793452829#Double_buffering_in_computer_graphics
+        glfwSwapBuffers(window);
+
+        // Verificamos com o sistema operacional se houve alguma interação do
+        // usuário (teclado, mouse, ...). Caso positivo, as funções de callback
+        // definidas anteriormente usando glfwSet*Callback() serão chamadas
+        // pela biblioteca GLFW.
+        glfwPollEvents();
+    }
 
     // Ficamos em um loop infinito, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
@@ -391,47 +492,42 @@ int main(int argc, char* argv[])
         glm::vec4 camera_lookat_l    = player_position; // Ponto "l", para onde a câmera (look-at) estará sempre olhando
         glm::vec4 camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
 
-        if (!g_IsCutsceneActive) {
-            //CÂMERA LIVRE
-            glm::vec4 camera_free_view_vector = glm::vec4(x,y,z,0.0f); // Vetor "view", sentido para onde a câmera está virada
-            glm::vec4 w = -camera_free_view_vector;
-            glm::vec4 u = crossproduct(camera_up_vector, w);
+        //CÂMERA LIVRE
+        glm::vec4 camera_free_view_vector = glm::vec4(x,y,z,0.0f); // Vetor "view", sentido para onde a câmera está virada
+        glm::vec4 w = -camera_free_view_vector;
+        glm::vec4 u = crossproduct(camera_up_vector, w);
 
-            //Tempo do frame atual
-            float actFrame = (float)glfwGetTime();
+        //Tempo do frame atual
+        float actFrame = (float)glfwGetTime();
 
-            //Variação de tempo
-            float timeDiff = actFrame - prevFrame;
-            prevFrame = actFrame;
+        //Variação de tempo
+        float timeDiff = actFrame - prevFrame;
+        prevFrame = actFrame;
 
-            if (forward) {
-                camera_position_c += -w * 5.0f * timeDiff;
-                player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 5.0f, camera_position_c.z - 5.0f, 1.0f);
-            }
-
-            if (backward) {
-                camera_position_c += w * 5.0f * timeDiff;
-                player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 5.0f, camera_position_c.z - 5.0f, 1.0f);
-            }
-
-            if (left) {
-                camera_position_c += -u * 5.0f * timeDiff;
-                player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 5.0f, camera_position_c.z - 5.0f, 1.0f);
-            }
-
-            if (right) {
-                camera_position_c += u * 5.0f * timeDiff, 0.0f;
-                player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 5.0f, camera_position_c.z - 5.0f, 1.0f);
-            }
-
-            // Computamos a matriz "View" utilizando os parâmetros da câmera para
-            // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
-            view = Matrix_Camera_View(camera_position_c, camera_free_view_vector, camera_up_vector);
-        } else {
-            //CÂMERA DE PONTO FIXO (usada para a cutscene)
-            glm::vec4 camera_lookat_view_vector = camera_lookat_l - camera_position_c; // Vetor "view", sentido para onde a câmera está virada
-            view = Matrix_Camera_View(cam_pos_lookat, camera_lookat_view_vector, camera_up_vector);
+        if (forward) {
+            camera_position_c += -w * 5.0f * timeDiff;
+            player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 5.0f, camera_position_c.z - 5.0f, 1.0f);
         }
+
+        if (backward) {
+            camera_position_c += w * 5.0f * timeDiff;
+            player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 5.0f, camera_position_c.z - 5.0f, 1.0f);
+        }
+
+        if (left) {
+            camera_position_c += -u * 5.0f * timeDiff;
+            player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 5.0f, camera_position_c.z - 5.0f, 1.0f);
+        }
+
+        if (right) {
+            camera_position_c += u * 5.0f * timeDiff, 0.0f;
+            player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 5.0f, camera_position_c.z - 5.0f, 1.0f);
+        }
+
+        // Computamos a matriz "View" utilizando os parâmetros da câmera para
+        // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
+        view = Matrix_Camera_View(camera_position_c, camera_free_view_vector, camera_up_vector);
+
         // Agora computamos a matriz de Projeção.
         glm::mat4 projection;
 
@@ -1205,8 +1301,13 @@ void CursorPosCallback(GLFWwindow* window, double xpos, double ypos)
         float dy = ypos - g_LastCursorPosY;
 
         // Atualizamos parâmetros da câmera com os deslocamentos
-        g_CameraTheta -= 0.005f*dx;
-        g_CameraPhi   -= 0.005f*dy;
+        if(!g_IsCutsceneActive) {
+            g_CameraTheta -= 0.005f*dx;
+            g_CameraPhi   -= 0.005f*dy;
+        } else {
+            g_CameraTheta -= 0.01f*dx;
+            g_CameraPhi   += 0.01f*dy;
+        }
 
         // Em coordenadas esféricas, o ângulo phi deve ficar entre -pi/2 e +pi/2.
         float phimax = 3.141592f/2;
