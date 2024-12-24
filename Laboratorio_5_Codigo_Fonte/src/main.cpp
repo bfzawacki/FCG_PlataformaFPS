@@ -376,9 +376,9 @@ int main(int argc, char* argv[])
         glm::vec4 camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
 
         glm::vec4 p1 = cam_pos_lookat;
-        glm::vec4 p2 = glm::vec4(player_position.x - 10, cam_pos_lookat.y, player_position.z, 1.0f);
-        glm::vec4 p3 = glm::vec4(player_position.x - 6, cam_pos_lookat.y, player_position.z, 1.0f);
-        glm::vec4 p4 = glm::vec4(-cam_pos_lookat.x, cam_pos_lookat.y, cam_pos_lookat.z, 1.0f);
+        glm::vec4 p2 = glm::vec4(player_position.x - 13, player_position.y + 9, player_position.z + 2, 1.0f);
+        glm::vec4 p3 = glm::vec4(player_position.x - 3, player_position.y - 2 , player_position.z - 3, 1.0f);
+        glm::vec4 p4 = glm::vec4(player_position.x, player_position.y + 4, player_position.z - 2, 1.0f);
         glm::vec4 newPos;
 
         if(t <= 1) {
@@ -390,7 +390,10 @@ int main(int argc, char* argv[])
             view = Matrix_Camera_View(newPos, camera_lookat_l - newPos, camera_up_vector);
             glUniformMatrix4fv(g_view_uniform, 1, GL_FALSE, glm::value_ptr(view));
 
-            t = t + 0.001;
+            float cutActFrame = (float)glfwGetTime();
+            float timeDiff = cutActFrame - prevFrame;
+
+            t += 0.0005 * timeDiff;
         } else {
             g_IsCutsceneActive = false;
         }
