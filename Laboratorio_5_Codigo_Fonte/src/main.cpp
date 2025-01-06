@@ -230,7 +230,7 @@ GLint g_bbox_min_uniform;
 GLint g_bbox_max_uniform;
 
 // Variável que controla se a cutscene está ativa ou não
-bool g_IsCutsceneActive = true;
+bool g_IsCutsceneActive = false;
 
 // Variável view que define a matriz de modelagem da câmera
 glm::mat4 view;
@@ -324,10 +324,6 @@ int main(int argc, char* argv[])
     ComputeNormals(&playermodel);
     BuildTrianglesAndAddToVirtualScene(&playermodel);
 
-    ObjModel islandcollisionmodel("../../data/IslandCollisionMesh.obj");
-    ComputeNormals(&islandcollisionmodel);
-    BuildTrianglesAndAddToVirtualScene(&islandcollisionmodel);
-
     if ( argc > 1 )
     {
         ObjModel model(argv[1]);
@@ -358,7 +354,6 @@ int main(int argc, char* argv[])
     std::map<std::string, glm::vec3> object_position;
     object_position["the_island"] = island_position;
     object_position["the_player"] = player_position;
-    object_position["IslandCollisionMesh"] = island_position;
 
     // CUTSCENE 
     float t = 0;  //variável usada para controlar a construção da curva de Bézier
@@ -421,19 +416,12 @@ int main(int argc, char* argv[])
 
         #define ISLAND 0
         #define PLAYER 1
-        #define ISLANDCOLLISION 2
 
         model = Matrix_Translate(island_position.x,island_position.y,island_position.z)
             * Matrix_Scale(30.0f, 30.0f, 30.0f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, ISLAND);
         DrawVirtualObject("the_island");
-
-        model = Matrix_Translate(island_position.x,island_position.y,island_position.z)
-            * Matrix_Scale(30.0f, 30.0f, 30.0f);
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, ISLANDCOLLISION);
-        DrawVirtualObject("IslandCollisionMesh");
 
         model = Matrix_Translate(player_position.x, player_position.y, player_position.z)
             * (g_IsCutsceneActive ? Matrix_Identity() : Matrix_Rotate_Y(g_CameraTheta))
@@ -530,7 +518,7 @@ int main(int argc, char* argv[])
         // Note que, no sistema de coordenadas da câmera, os planos near e far
         // estão no sentido negativo! Veja slides 176-204 do documento Aula_09_Projecoes.pdf.
         float nearplane = -0.1f;  // Posição do "near plane"
-        float farplane  = -50.0f; // Posição do "far plane"
+        float farplane  = -250.0f; // Posição do "far plane"
 
         if (g_UsePerspectiveProjection)
         {
@@ -563,19 +551,54 @@ int main(int argc, char* argv[])
 
         #define ISLAND 0
         #define PLAYER 1
-        #define ISLANDCOLLISION 2
 
-        model = Matrix_Translate(island_position.x,island_position.y,island_position.z)
-            * Matrix_Scale(30.0f, 30.0f, 30.0f);
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, ISLAND);
-        DrawVirtualObject("the_island");
-
-        model = Matrix_Translate(island_position.x,island_position.y,island_position.z)
-            * Matrix_Scale(30.0f, 30.0f, 30.0f);
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, ISLANDCOLLISION);
-        DrawVirtualObject("IslandCollisionMesh");
+        PushMatrix(model);
+            model = Matrix_Translate(island_position.x,island_position.y,island_position.z)
+                * Matrix_Scale(30.0f, 30.0f, 30.0f);
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, ISLAND);
+            DrawVirtualObject("the_island");
+            PushMatrix(model);
+                model = Matrix_Translate(25.0f, 8.0f, 15.0f);
+                PushMatrix(model);
+                    model = model * Matrix_Scale(20.0f, 20.0f, 20.0f)
+                            * Matrix_Rotate_Y(20);
+                    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+                    glUniform1i(g_object_id_uniform, ISLAND);
+                    DrawVirtualObject("the_island");
+                PopMatrix(model);
+                PushMatrix(model);
+                    model = model * Matrix_Translate(40.0f, 4.0f, -30.0f);
+                    PushMatrix(model);
+                        model = model * Matrix_Scale(35.0f, 35.0f, 35.0f)
+                                * Matrix_Rotate_Y(14);
+                        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+                        glUniform1i(g_object_id_uniform, ISLAND);
+                        DrawVirtualObject("the_island");
+                    PopMatrix(model);
+                    PushMatrix(model);
+                        model = model * Matrix_Translate(30.0f, 12.0f, 25.0f);
+                        PushMatrix(model);
+                            model = model * Matrix_Scale(15.0f, 15.0f, 15.0f)
+                                * Matrix_Rotate_Y(2);
+                            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+                            glUniform1i(g_object_id_uniform, ISLAND);
+                            DrawVirtualObject("the_island");
+                        PopMatrix(model);
+                        PushMatrix(model);
+                            model = model * Matrix_Translate(40.0f, 3.0f, 0.0f);
+                            PushMatrix(model);
+                                model = model * Matrix_Scale(25.0f, 25.0f, 25.0f)
+                                    * Matrix_Rotate_Y(32);
+                                glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+                                glUniform1i(g_object_id_uniform, ISLAND);
+                                DrawVirtualObject("the_island");
+                            PopMatrix(model);
+                        PopMatrix(model);
+                    PopMatrix(model);
+                PopMatrix(model);
+            PopMatrix(model);
+        PopMatrix(model);
 
         model = Matrix_Translate(player_position.x, player_position.y, player_position.z)
             * (g_IsCutsceneActive ? Matrix_Identity() : Matrix_Rotate_Y(g_CameraTheta))
