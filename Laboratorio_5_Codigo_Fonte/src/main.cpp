@@ -169,6 +169,9 @@ struct SceneObject
 
 // Abaixo definimos variáveis globais utilizadas em várias funções do código.
 
+bool CheckCollisionAABB(const SceneObject& obj1, const glm::vec3& position1,
+                        const SceneObject& obj2, const glm::vec3& position2);
+
 // A cena virtual é uma lista de objetos nomeados, guardados em um dicionário
 // (map).  Veja dentro da função BuildTrianglesAndAddToVirtualScene() como que são incluídos
 // objetos dentro da variável g_VirtualScene, e veja na função main() como
@@ -424,6 +427,21 @@ int main(int argc, char* argv[])
             camera_position_c += glm::vec4(u_direction * 10.0f * timeDiff, 0.0f);
             player_position = glm::vec3(camera_position_c.x, camera_position_c.y - 9.0f, camera_position_c.z - 1.0f);
         }
+
+
+
+        glm::vec3 new_player_position = player_position + glm::vec3(player_position.x, player_position.y, player_position.z); 
+
+        bool collision = CheckCollisionAABB(g_VirtualScene["the_player"], new_player_position,
+                                            g_VirtualScene["the_island"], island_position);
+
+        if (collision)
+        {
+            // Atualizar a posição do jogador houver colisão
+            player_position = new_player_position;
+            camera_position_c = glm::vec4(player_position.x, player_position.y + 9.0f, player_position.z + 1.0f, 1.0f);
+            std::cout << "Collision detected between player and island!" << std::endl;
+        }
      
 
         // Computamos a matriz "View" utilizando os parâmetros da câmera para
@@ -470,6 +488,10 @@ int main(int argc, char* argv[])
         #define ISLAND 0
         #define PLAYER 1
 
+        /* // Verificar as posições do jogador e da ilha
+        std::cout << "Player position: (" << player_position.x << ", " << player_position.y << ", " << player_position.z << ")" << std::endl;
+        std::cout << "Island position: (" << island_position.x << ", " << island_position.y << ", " << island_position.z << ")" << std::endl;
+        */
 
         //Desenhamos o modelo da ilha
         model = Matrix_Translate(island_position.x,island_position.y,island_position.z)
@@ -477,6 +499,11 @@ int main(int argc, char* argv[])
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, ISLAND);
         DrawVirtualObject("the_island");
+        
+
+        // Inicialização da bounding box da ilha
+        g_VirtualScene["the_island"].bbox_min = glm::vec3(-0.5f * 30.0f, -0.5f * 30.0f, -0.5f * 30.0f);
+        g_VirtualScene["the_island"].bbox_max = glm::vec3(0.5f * 30.0f, 0.5f * 30.0f, 0.5f * 30.0f);
 
 
         model = Matrix_Translate(player_position.x, player_position.y, player_position.z)
@@ -485,35 +512,35 @@ int main(int argc, char* argv[])
         glUniform1i(g_object_id_uniform, PLAYER);
         DrawVirtualObject("the_player");
 
+        // Inicialização da bounding box do jogador
+        g_VirtualScene["the_player"].bbox_min = glm::vec3(-0.5f * 0.5f, -0.5f * 0.5f, -0.5f * 0.5f);
+        g_VirtualScene["the_player"].bbox_max = glm::vec3(0.5f * 0.5f, 0.5f * 0.5f, 0.5f * 0.5f);   
+
         // Calcular os limites da bounding box do jogador
         glm::vec3 player_bbox_min = g_VirtualScene["the_player"].bbox_min + player_position;
         glm::vec3 player_bbox_max = g_VirtualScene["the_player"].bbox_max + player_position;
 
-        // Verificar as coordenadas da bounding box do jogador
-        std::cout << "Player bounding box min: (" << player_bbox_min.x << ", " << player_bbox_min.y << ", " << player_bbox_min.z << ")" << std::endl;
-        //std::cout << "Player bounding box max: (" << player_bbox_max.x << ", " << player_bbox_max.y << ", " << player_bbox_max.z << ")" << std::endl;
-
-        
-        // Definir a cor para a bounding box do jogador (azul)
-        glColor3f(0.0f, 0.0f, 1.0f);
-
-        
-        // Desenhar a bounding box do jogador
-        DrawBoundingBox(player_bbox_min, player_bbox_max);
-
         // Calcular os limites da bounding box da ilha
-        glm::vec3 island_bbox_min = g_VirtualScene["the_island"].bbox_min;
-        glm::vec3 island_bbox_max = g_VirtualScene["the_island"].bbox_max;
+        glm::vec3 island_bbox_min = g_VirtualScene["the_island"].bbox_min + island_position;
+        glm::vec3 island_bbox_max = g_VirtualScene["the_island"].bbox_max + island_position;
+
+       /* // Verificar as coordenadas da bounding box do jogador
+        std::cout << "Player bounding box min: (" << player_bbox_min.x << ", " << player_bbox_min.y << ", " << player_bbox_min.z << ")" << std::endl;
+        std::cout << "Player bounding box max: (" << player_bbox_max.x << ", " << player_bbox_max.y << ", " << player_bbox_max.z << ")" << std::endl;
 
         // Verificar as coordenadas da bounding box da ilha
-        //std::cout << "Island bounding box min: (" << island_bbox_min.x << ", " << island_bbox_min.y << ", " << island_bbox_min.z << ")" << std::endl;
-        //std::cout << "Island bounding box max: (" << island_bbox_max.x << ", " << island_bbox_max.y << ", " << island_bbox_max.z << ")" << std::endl;
+        std::cout << "Island bounding box min: (" << island_bbox_min.x << ", " << island_bbox_min.y << ", " << island_bbox_min.z << ")" << std::endl;
+        std::cout << "Island bounding box max: (" << island_bbox_max.x << ", " << island_bbox_max.y << ", " << island_bbox_max.z << ")" << std::endl;
+        */
+        
+        // Desenhar as bounding boxes
+        glColor3f(0.0f, 0.0f, 1.0f); // Cor azul para o jogador
+        DrawBoundingBox(player_bbox_min, player_bbox_max);
 
-        // Definir a cor para a bounding box da ilha (vermelho)
-        glColor3f(1.0f, 0.0f, 0.0f);
-
-        // Desenhar a bounding box da ilha
+        glColor3f(1.0f, 0.0f, 0.0f); // Cor vermelha para a ilha
         DrawBoundingBox(island_bbox_min, island_bbox_max);
+
+
 
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
         // terceiro cubo.
@@ -552,6 +579,13 @@ int main(int argc, char* argv[])
 
     void DrawBoundingBox(const glm::vec3& bbox_min, const glm::vec3& bbox_max)
 {
+
+    // Aumentar a espessura das linhas
+    glLineWidth(2.0f);
+
+    // Desativar o teste de profundidade temporariamente
+    glDisable(GL_DEPTH_TEST);
+
     // Vértices da bounding box
     glm::vec3 v0 = bbox_min;
     glm::vec3 v1 = glm::vec3(bbox_max.x, bbox_min.y, bbox_min.z);
@@ -582,15 +616,25 @@ int main(int argc, char* argv[])
         glVertex3f(v5.x, v5.y, v5.z); glVertex3f(v6.x, v6.y, v6.z);
         glVertex3f(v4.x, v4.y, v4.z); glVertex3f(v7.x, v7.y, v7.z);
     glEnd();
+
+    // Reativar o teste de profundidade
+    glEnable(GL_DEPTH_TEST);
+
+    // Restaurar a espessura das linhas para o valor padrão
+    glLineWidth(1.0f);
+
+    glLineWidth(1.0f);
 }
 
 // Função que checa colisão entre dois objetos (AABB)
 bool CheckCollisionAABB(const SceneObject& obj1, const glm::vec3& position1,
                         const SceneObject& obj2, const glm::vec3& position2)
 {
+    // Calcula as coordenadas mínimas e máximas da bounding box do primeiro objeto
     glm::vec3 obj1_min = obj1.bbox_min + position1;
     glm::vec3 obj1_max = obj1.bbox_max + position1;
 
+    // Calcula as coordenadas mínimas e máximas da bounding box do segundo objeto
     glm::vec3 obj2_min = obj2.bbox_min + position2;
     glm::vec3 obj2_max = obj2.bbox_max + position2;
 
