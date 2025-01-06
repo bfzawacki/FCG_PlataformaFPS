@@ -21,6 +21,7 @@ uniform mat4 projection;
 // Identificador que define qual objeto está sendo desenhado no momento
 #define ISLAND 0
 #define PLAYER 1
+#define COW 2
 uniform int object_id;
 
 // Parâmetros da axis-aligned bounding box (AABB) do modelo
@@ -29,6 +30,7 @@ uniform vec4 bbox_max;
 
 // Variáveis para acesso das imagens de textura
 uniform sampler2D TextureImage0;
+uniform sampler2D TextureImage1;
 
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
 out vec4 color;
@@ -67,39 +69,38 @@ void main()
 
 
 
-    if ( object_id == ISLAND )
-{
-        U = texcoords.x;
-        V = texcoords.y;
+if ( object_id == ISLAND ) {
+    U = texcoords.x;
+    V = texcoords.y;
+} else if ( object_id == PLAYER ) {
+    U = texcoords.x;
+    V = texcoords.y;
+} else if ( object_id == COW ) {
+    U = texcoords.x;
+    V = texcoords.y;
+} 
+
+
+// Obtemos a refletância difusa a partir da leitura da imagem TextureImage0
+vec3 Kd0 = texture(TextureImage0, vec2(U,V)).rgb;
+
+vec3 Kd1 = texture(TextureImage1, vec2(U,V)).rgb;
+
+//vec3 Kd2 = texture(TextureImage2, vec2(U, V)).rgb;
+
+
+// Equação de Iluminação
+float lambert = max(0,dot(n,l));
+
+if (object_id == ISLAND) {
+    // Iluminação usando a textura da ilha (TextureImage0)
+    color.rgb = Kd0 * (lambert + 0.01);
+} else if (object_id == COW) {
+    color.rgb = Kd1 * (lambert + 0.01);
+} else {
+    // Outros objetos usam Kd0 e Kd1
+    color.rgb = Kd0 * (lambert + 0.01) + (Kd1 * max(0, (0.275 - lambert)));
 }
-
-if ( object_id == PLAYER )
-{
-        U = texcoords.x;
-        V = texcoords.y;
-}
-
-
-    // Obtemos a refletância difusa a partir da leitura da imagem TextureImage0
-    vec3 Kd0 = texture(TextureImage0, vec2(U,V)).rgb;
-
-    //vec3 Kd1 = texture(TextureImage1, vec2(U,V)).rgb;
-
-    //vec3 Kd2 = texture(TextureImage2, vec2(U, V)).rgb;
-
-
-    // Equação de Iluminação
-    float lambert = max(0,dot(n,l));
-    if (object_id == ISLAND)
-{
-        // Iluminação usando a textura da ilha (TextureImage2)
-        color.rgb = Kd0 * (lambert + 0.01);
-}
-    //else
-//{
-        // Outros objetos usam Kd0 e Kd1
-        //color.rgb = Kd0 * (lambert + 0.01) + (Kd1 * max(0, (0.275 - lambert)));
-//}
 
     // NOTE: Se você quiser fazer o rendering de objetos transparentes, é
     // necessário:

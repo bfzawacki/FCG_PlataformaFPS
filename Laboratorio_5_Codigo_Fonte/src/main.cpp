@@ -318,6 +318,7 @@ int main(int argc, char* argv[])
 
     // Carregamos imagens para serem utilizadas como textura
     LoadTextureImage("../../data/texture_island.png"); // TextureImage0
+    LoadTextureImage("../../data/texture_cow.png"); //TextureImage1 
 
     ObjModel islandmodel("../../data/island.obj");
     ComputeNormals(&islandmodel);
@@ -326,6 +327,10 @@ int main(int argc, char* argv[])
     ObjModel playermodel("../../data/player.obj");
     ComputeNormals(&playermodel);
     BuildTrianglesAndAddToVirtualScene(&playermodel);
+
+    ObjModel cowmodel("../../data/cow.obj");
+    ComputeNormals(&cowmodel);
+    BuildTrianglesAndAddToVirtualScene(&cowmodel);
 
     if ( argc > 1 )
     {
@@ -511,8 +516,6 @@ int main(int argc, char* argv[])
             player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 5.0f, camera_position_c.z - 5.0f, 1.0f);
         }
 
-
-
         glm::vec4 new_player_position = player_position + glm::vec4(player_position.x, player_position.y, player_position.z, 1.0f); 
 
         bool collision = CheckCollisionAABB(g_VirtualScene["the_player"], new_player_position,
@@ -525,7 +528,6 @@ int main(int argc, char* argv[])
             camera_position_c = glm::vec4(player_position.x, player_position.y + 9.0f, player_position.z + 1.0f, 1.0f);
             std::cout << "Collision detected between player and island!" << std::endl;
         }
-     
 
         // Computamos a matriz "View" utilizando os parâmetros da câmera para
         // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
@@ -570,6 +572,7 @@ int main(int argc, char* argv[])
 
         #define ISLAND 0
         #define PLAYER 1
+        #define COW 2
 
         PushMatrix(model);
             model = Matrix_Translate(island_position.x,island_position.y,island_position.z)
@@ -613,6 +616,15 @@ int main(int argc, char* argv[])
                                 glUniform1i(g_object_id_uniform, ISLAND);
                                 DrawVirtualObject("the_island");
                             PopMatrix(model);
+                            PushMatrix(model);
+                                model = model * Matrix_Translate(0.0f, 3.0f, 3.0f);
+                                PushMatrix(model);
+                                    model = model * Matrix_Scale(5.0f, 5.0f, 5.0f);
+                                    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+                                    glUniform1i(g_object_id_uniform, COW);
+                                    DrawVirtualObject("the_cow");
+                                PopMatrix(model);
+                            PopMatrix(model);
                         PopMatrix(model);
                     PopMatrix(model);
                 PopMatrix(model);
@@ -637,15 +649,6 @@ int main(int argc, char* argv[])
         // Calcular os limites da bounding box da ilha
         glm::vec3 island_bbox_min = g_VirtualScene["the_island"].bbox_min + glm::vec3(island_position);
         glm::vec3 island_bbox_max = g_VirtualScene["the_island"].bbox_max + glm::vec3(island_position);
-
-       /* // Verificar as coordenadas da bounding box do jogador
-        std::cout << "Player bounding box min: (" << player_bbox_min.x << ", " << player_bbox_min.y << ", " << player_bbox_min.z << ")" << std::endl;
-        std::cout << "Player bounding box max: (" << player_bbox_max.x << ", " << player_bbox_max.y << ", " << player_bbox_max.z << ")" << std::endl;
-
-        // Verificar as coordenadas da bounding box da ilha
-        std::cout << "Island bounding box min: (" << island_bbox_min.x << ", " << island_bbox_min.y << ", " << island_bbox_min.z << ")" << std::endl;
-        std::cout << "Island bounding box max: (" << island_bbox_max.x << ", " << island_bbox_max.y << ", " << island_bbox_max.z << ")" << std::endl;
-        */
         
         // Desenhar as bounding boxes
         glColor3f(0.0f, 0.0f, 1.0f); // Cor azul para o jogador
@@ -653,7 +656,6 @@ int main(int argc, char* argv[])
 
         glColor3f(1.0f, 0.0f, 0.0f); // Cor vermelha para a ilha
         DrawBoundingBox(island_bbox_min, island_bbox_max);
-
 
 
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
