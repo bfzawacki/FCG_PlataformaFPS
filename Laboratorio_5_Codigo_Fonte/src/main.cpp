@@ -233,7 +233,7 @@ GLint g_bbox_min_uniform;
 GLint g_bbox_max_uniform;
 
 // Variável que controla se a cutscene está ativa ou não
-bool g_IsCutsceneActive = false;
+bool g_IsCutsceneActive = true;
 
 // Variável view que define a matriz de modelagem da câmera
 glm::mat4 view;
@@ -513,7 +513,7 @@ int main(int argc, char* argv[])
 
 
 
-        glm::vec3 new_player_position = player_position + glm::vec3(player_position.x, player_position.y, player_position.z); 
+        glm::vec4 new_player_position = player_position + glm::vec4(player_position.x, player_position.y, player_position.z, 1.0f); 
 
         bool collision = CheckCollisionAABB(g_VirtualScene["the_player"], new_player_position,
                                             g_VirtualScene["the_island"], island_position);
@@ -635,8 +635,8 @@ int main(int argc, char* argv[])
         glm::vec3 player_bbox_max = g_VirtualScene["the_player"].bbox_max + glm::vec3(player_position);
 
         // Calcular os limites da bounding box da ilha
-        glm::vec3 island_bbox_min = g_VirtualScene["the_island"].bbox_min + island_position;
-        glm::vec3 island_bbox_max = g_VirtualScene["the_island"].bbox_max + island_position;
+        glm::vec3 island_bbox_min = g_VirtualScene["the_island"].bbox_min + glm::vec3(island_position);
+        glm::vec3 island_bbox_max = g_VirtualScene["the_island"].bbox_max + glm::vec3(island_position);
 
        /* // Verificar as coordenadas da bounding box do jogador
         std::cout << "Player bounding box min: (" << player_bbox_min.x << ", " << player_bbox_min.y << ", " << player_bbox_min.z << ")" << std::endl;
