@@ -68,7 +68,6 @@ void main()
     float V = 0.0;
 
 
-
 if ( object_id == ISLAND ) {
     U = texcoords.x;
     V = texcoords.y;
@@ -76,8 +75,17 @@ if ( object_id == ISLAND ) {
     U = texcoords.x;
     V = texcoords.y;
 } else if ( object_id == COW ) {
-    U = texcoords.x;
-    V = texcoords.y;
+    float minx = bbox_min.x;
+    float maxx = bbox_max.x;
+
+    float miny = bbox_min.y;
+    float maxy = bbox_max.y;
+
+    float minz = bbox_min.z;
+    float maxz = bbox_max.z;
+
+    U = (position_model.x - minx)/(maxx - minx);
+    V = (position_model.y- miny )/(maxy - miny);
 } 
 
 
