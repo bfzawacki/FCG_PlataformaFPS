@@ -233,7 +233,7 @@ GLint g_bbox_min_uniform;
 GLint g_bbox_max_uniform;
 
 // Variável que controla se a cutscene está ativa ou não
-bool g_IsCutsceneActive = true;
+bool g_IsCutsceneActive = false;
 
 // Variável view que define a matriz de modelagem da câmera
 glm::mat4 view;
@@ -617,9 +617,10 @@ int main(int argc, char* argv[])
                                 DrawVirtualObject("the_island");
                             PopMatrix(model);
                             PushMatrix(model);
-                                model = model * Matrix_Translate(0.0f, 3.0f, 3.0f);
+                                model = model * Matrix_Translate(4.0f, 2.0f, 6.0f);
                                 PushMatrix(model);
-                                    model = model * Matrix_Scale(5.0f, 5.0f, 5.0f);
+                                    model = model * Matrix_Scale(5.0f, 5.0f, 5.0f)
+                                            * Matrix_Rotate_Y(10);
                                     glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
                                     glUniform1i(g_object_id_uniform, COW);
                                     DrawVirtualObject("the_cow");
