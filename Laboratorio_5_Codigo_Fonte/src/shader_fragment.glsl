@@ -39,6 +39,7 @@ out vec4 color;
 #define M_PI   3.14159265358979323846
 #define M_PI_2 1.57079632679489661923
 
+
 void main()
 {
     // Obtemos a posição da câmera utilizando a inversa da matriz que define o
@@ -63,18 +64,38 @@ void main()
     // Vetor que define o sentido da câmera em relação ao ponto atual.
     vec4 v = normalize(camera_position - p);
 
+    // Vetor que define o sentido da reflexão especular ideal.
+    vec4 r = reflect(-l, n); 
+
+    // Vetor h utilizado no cálculo do modelo de iluminação de Blinn-Phong
+    vec4 h = normalize(v + l);
+
+    // Parâmetros que definem as propriedades espectrais da superfície
+    vec3 Kd; // Refletância difusa
+    vec3 Ks; // Refletância especular
+    vec3 Ka; // Refletância ambiente
+    float q; // Expoente especular para o modelo de iluminação de Phong
+
     // Coordenadas de textura U e V
     float U = 0.0;
     float V = 0.0;
 
 
 if ( object_id == ISLAND ) {
+
     U = texcoords.x;
     V = texcoords.y;
+
+    Ks = vec3(0.5,0.5,0.5);
+    q = 100.0;
+
 } else if ( object_id == PLAYER ) {
+
     U = texcoords.x;
     V = texcoords.y;
+
 } else if ( object_id == COW ) {
+
     float minx = bbox_min.x;
     float maxx = bbox_max.x;
 
@@ -86,6 +107,9 @@ if ( object_id == ISLAND ) {
 
     U = (position_model.x - minx)/(maxx - minx);
     V = (position_model.y- miny )/(maxy - miny);
+
+    Ka = vec3(0.5,0.5,0.5);
+
 } 
 
 
@@ -96,15 +120,32 @@ vec3 Kd1 = texture(TextureImage1, vec2(U,V)).rgb;
 
 //vec3 Kd2 = texture(TextureImage2, vec2(U, V)).rgb;
 
+// Espectro da fonte de iluminação
+vec3 I = vec3(1.0,1.0,1.0); 
+
+// Espectro da luz ambiente
+vec3 Ia = vec3(0.02,0.02,0.02); 
 
 // Equação de Iluminação
 float lambert = max(0,dot(n,l));
 
+// Iluminação ambiente
+vec3 ambient_term = Ka * Ia; 
+
+// Termo especular utilizando o modelo de iluminação de Blinn-Phong
+vec3 blinn_phong_specular_term = Ks * I * pow(max(0, dot(n,h)), q);
+
 if (object_id == ISLAND) {
-    // Iluminação usando a textura da ilha (TextureImage0)
-    color.rgb = Kd0 * (lambert + 0.01);
+
+    // Uso do modelo de iluminação de Blinn-Phong
+    color.rgb = (Kd0 * I * (lambert + 0.07)) + blinn_phong_specular_term;
+
+
 } else if (object_id == COW) {
-    color.rgb = Kd1 * (lambert + 0.01);
+
+    //Uso do modelo de iluminação difusa de Lambert
+    color.rgb = Kd1 * I * (lambert + 0.1);
+
 } else {
     // Outros objetos usam Kd0 e Kd1
     color.rgb = Kd0 * (lambert + 0.01) + (Kd1 * max(0, (0.275 - lambert)));
