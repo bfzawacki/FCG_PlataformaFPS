@@ -324,6 +324,10 @@ int main(int argc, char* argv[])
     ComputeNormals(&playermodel);
     BuildTrianglesAndAddToVirtualScene(&playermodel);
 
+    ObjModel islandcollisionmodel("../../data/IslandCollisionMesh.obj");
+    ComputeNormals(&islandcollisionmodel);
+    BuildTrianglesAndAddToVirtualScene(&islandcollisionmodel);
+
     if ( argc > 1 )
     {
         ObjModel model(argv[1]);
@@ -354,6 +358,7 @@ int main(int argc, char* argv[])
     std::map<std::string, glm::vec3> object_position;
     object_position["the_island"] = island_position;
     object_position["the_player"] = player_position;
+    object_position["IslandCollisionMesh"] = island_position;
 
     // CUTSCENE 
     float t = 0;  //variável usada para controlar a construção da curva de Bézier
@@ -416,6 +421,7 @@ int main(int argc, char* argv[])
 
         #define ISLAND 0
         #define PLAYER 1
+        #define ISLANDCOLLISION 2
 
         model = Matrix_Translate(island_position.x,island_position.y,island_position.z)
             * Matrix_Scale(30.0f, 30.0f, 30.0f);
@@ -423,12 +429,19 @@ int main(int argc, char* argv[])
         glUniform1i(g_object_id_uniform, ISLAND);
         DrawVirtualObject("the_island");
 
+        model = Matrix_Translate(island_position.x,island_position.y,island_position.z)
+            * Matrix_Scale(30.0f, 30.0f, 30.0f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, ISLANDCOLLISION);
+        DrawVirtualObject("IslandCollisionMesh");
+
         model = Matrix_Translate(player_position.x, player_position.y, player_position.z)
             * (g_IsCutsceneActive ? Matrix_Identity() : Matrix_Rotate_Y(g_CameraTheta))
             * Matrix_Scale(0.2f, 0.2f, 0.2f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, PLAYER);
         DrawVirtualObject("the_player");
+
         TextRendering_ShowEulerAngles(window);
 
         TextRendering_ShowProjection(window);
@@ -550,14 +563,19 @@ int main(int argc, char* argv[])
 
         #define ISLAND 0
         #define PLAYER 1
+        #define ISLANDCOLLISION 2
 
-        //Desenhamos o modelo da ilha
         model = Matrix_Translate(island_position.x,island_position.y,island_position.z)
             * Matrix_Scale(30.0f, 30.0f, 30.0f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, ISLAND);
         DrawVirtualObject("the_island");
 
+        model = Matrix_Translate(island_position.x,island_position.y,island_position.z)
+            * Matrix_Scale(30.0f, 30.0f, 30.0f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, ISLANDCOLLISION);
+        DrawVirtualObject("IslandCollisionMesh");
 
         model = Matrix_Translate(player_position.x, player_position.y, player_position.z)
             * (g_IsCutsceneActive ? Matrix_Identity() : Matrix_Rotate_Y(g_CameraTheta))
