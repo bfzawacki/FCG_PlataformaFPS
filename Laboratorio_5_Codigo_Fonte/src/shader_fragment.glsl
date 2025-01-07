@@ -162,7 +162,7 @@ if (object_id == ISLAND) {
 
 } else if (object_id == PLAYER){
 
-    //Uso do modelo de iluminação difusa de Lambert
+    //Uso do modelo de iluminação de Phong
     color.rgb = (Kd2 * I * (lambert + 0.1)) + phong_specular_term;
 
 } else {
