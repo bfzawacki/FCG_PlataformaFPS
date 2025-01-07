@@ -13,6 +13,9 @@ in vec4 position_model;
 // Coordenadas de textura obtidas do arquivo OBJ (se existirem!)
 in vec2 texcoords;
 
+// Nova entrada para a cor calculada pelo vertex shader (Gouraud Shading)
+in vec4 vertexcolor;
+
 // Matrizes computadas no código C++ e enviadas para a GPU
 uniform mat4 model;
 uniform mat4 view;
@@ -82,15 +85,17 @@ void main()
     float V = 0.0;
 
 
-if ( object_id == ISLAND ) {
+//if ( object_id == ISLAND ) {
 
-    U = texcoords.x;
-    V = texcoords.y;
+    //U = texcoords.x;
+    //V = texcoords.y;
 
-    Ks = vec3(0.5,0.5,0.5);
-    q = 100.0;
+    //Ks = vec3(0.5,0.5,0.5);
+    //q = 100.0;
 
-} else if ( object_id == PLAYER ) {
+//} else 
+
+if ( object_id == PLAYER ) {
 
     float minx = bbox_min.x;
     float maxx = bbox_max.x;
@@ -152,8 +157,9 @@ vec3 blinn_phong_specular_term = Ks * I * pow(max(0, dot(n,h)), q);
 if (object_id == ISLAND) {
 
     // Uso do modelo de iluminação de Blinn-Phong
-    color.rgb = (Kd0 * I * (lambert + 0.07)) + blinn_phong_specular_term;
-
+    //color.rgb = (Kd0 * I * (lambert + 0.07)) + blinn_phong_specular_term;
+    // Uso da cor interpolada pelo vertex shader (Gouraud Shading)
+    color = vertexcolor;
 
 } else if (object_id == COW) {
 
