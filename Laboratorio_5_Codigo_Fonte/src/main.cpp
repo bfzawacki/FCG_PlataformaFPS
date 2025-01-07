@@ -211,7 +211,7 @@ bool right = false;
 // usuário através do mouse (veja função CursorPosCallback()). A posição
 // efetiva da câmera é calculada dentro da função main(), dentro do loop de
 // renderização.
-float g_CameraTheta = 4.0f; // Ângulo no plano ZX em relação ao eixo Z
+float g_CameraTheta = 8.0f; // Ângulo no plano ZX em relação ao eixo Z
 float g_CameraPhi = 0.0f;   // Ângulo em relação ao eixo Y
 float g_CameraDistance = 9.0f; // Distância da câmera para a origem
 
@@ -324,6 +324,8 @@ int main(int argc, char* argv[])
 
     // Carregamos imagens para serem utilizadas como textura
     LoadTextureImage("../../data/texture_island.png"); // TextureImage0
+    LoadTextureImage("../../data/texture_cow.png"); //TextureImage1 
+    LoadTextureImage("../../data/texture_player.jpg"); //TextureImage2
 
     ObjModel islandmodel("../../data/island.obj");
     ComputeNormals(&islandmodel);
@@ -332,6 +334,10 @@ int main(int argc, char* argv[])
     ObjModel playermodel("../../data/player.obj");
     ComputeNormals(&playermodel);
     BuildTrianglesAndAddToVirtualScene(&playermodel);
+
+    ObjModel cowmodel("../../data/cow.obj");
+    ComputeNormals(&cowmodel);
+    BuildTrianglesAndAddToVirtualScene(&cowmodel);
 
     if ( argc > 1 )
     {
@@ -351,11 +357,11 @@ int main(int argc, char* argv[])
     glFrontFace(GL_CCW);
 
     // Inicialização da posição e orientação da free camera e lookat camera 
-    glm::vec4 camera_position_c = glm::vec4(5.0f,12.0f,-5.0f,1.0f); // Ponto "c", centro da câmera
+    glm::vec4 camera_position_c = glm::vec4(-4.0f,1.0f,10.0f,1.0f); // Ponto "c", centro da câmera
     glm::vec4 cam_pos_lookat = glm::vec4(10.0f,12.0f,-5.0f,1.0f);
 
     // Inicialização da posição do jogador
-    glm::vec4 player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 5.0f, camera_position_c.z - 5.0f, 1.0f);
+    glm::vec4 player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 2.3f, camera_position_c.z, 1.0f);
 
     // Inicialização da posição da ilha
     glm::vec4 island_position = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -387,8 +393,8 @@ int main(int argc, char* argv[])
         // Definição dos pontos da curva de Bézier
         glm::vec4 p1 = cam_pos_lookat;
         glm::vec4 p2 = glm::vec4(player_position.x - 13, player_position.y + 9, player_position.z + 2, 1.0f);
-        glm::vec4 p3 = glm::vec4(player_position.x - 3, player_position.y - 2 , player_position.z - 3, 1.0f);
-        glm::vec4 p4 = glm::vec4(player_position.x, player_position.y + 4, player_position.z - 2, 1.0f);
+        glm::vec4 p3 = glm::vec4(player_position.x - 3, player_position.y, player_position.z - 3, 1.0f);
+        glm::vec4 p4 = glm::vec4(player_position.x, player_position.y + 4, player_position.z, 1.0f);
         glm::vec4 newPos;
 
         if(t <= 1) {
@@ -413,7 +419,7 @@ int main(int argc, char* argv[])
         glm::mat4 projection;
 
         float nearplane = -0.1f; 
-        float farplane  = -50.0f; 
+        float farplane  = -250.0f; 
 
         float field_of_view = 3.141592 / 3.0f;
         projection = Matrix_Perspective(field_of_view, g_ScreenRatio, nearplane, farplane);
@@ -425,16 +431,70 @@ int main(int argc, char* argv[])
 
         #define ISLAND 0
         #define PLAYER 1
+        #define COW 2
 
-        model = Matrix_Translate(island_position.x,island_position.y,island_position.z)
-            * Matrix_Scale(30.0f, 30.0f, 30.0f);
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, ISLAND);
-        DrawVirtualObject("the_island");
+        PushMatrix(model);
+            model = Matrix_Translate(island_position.x,island_position.y,island_position.z)
+                * Matrix_Scale(30.0f, 30.0f, 30.0f);
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, ISLAND);
+            DrawVirtualObject("the_island");
+            PushMatrix(model);
+                model = Matrix_Translate(25.0f, 8.0f, 15.0f);
+                PushMatrix(model);
+                    model = model * Matrix_Scale(20.0f, 20.0f, 20.0f)
+                            * Matrix_Rotate_Y(20);
+                    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+                    glUniform1i(g_object_id_uniform, ISLAND);
+                    DrawVirtualObject("the_island");
+                PopMatrix(model);
+                PushMatrix(model);
+                    model = model * Matrix_Translate(40.0f, 4.0f, -30.0f);
+                    PushMatrix(model);
+                        model = model * Matrix_Scale(35.0f, 35.0f, 35.0f)
+                                * Matrix_Rotate_Y(14);
+                        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+                        glUniform1i(g_object_id_uniform, ISLAND);
+                        DrawVirtualObject("the_island");
+                    PopMatrix(model);
+                    PushMatrix(model);
+                        model = model * Matrix_Translate(30.0f, 12.0f, 25.0f);
+                        PushMatrix(model);
+                            model = model * Matrix_Scale(15.0f, 15.0f, 15.0f)
+                                * Matrix_Rotate_Y(2);
+                            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+                            glUniform1i(g_object_id_uniform, ISLAND);
+                            DrawVirtualObject("the_island");
+                        PopMatrix(model);
+                        PushMatrix(model);
+                            model = model * Matrix_Translate(40.0f, 3.0f, 0.0f);
+                            PushMatrix(model);
+                                model = model * Matrix_Scale(25.0f, 25.0f, 25.0f)
+                                    * Matrix_Rotate_Y(32);
+                                glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+                                glUniform1i(g_object_id_uniform, ISLAND);
+                                DrawVirtualObject("the_island");
+                            PopMatrix(model);
+                            PushMatrix(model);
+                                model = model * Matrix_Translate(4.0f, 2.0f, 6.0f);
+                                PushMatrix(model);
+                                    model = model * Matrix_Scale(5.0f, 5.0f, 5.0f)
+                                            * Matrix_Rotate_Y(10);
+                                    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+                                    glUniform1i(g_object_id_uniform, COW);
+                                    DrawVirtualObject("the_cow");
+                                PopMatrix(model);
+                            PopMatrix(model);
+                        PopMatrix(model);
+                    PopMatrix(model);
+                PopMatrix(model);
+            PopMatrix(model);
+        PopMatrix(model);
 
         model = Matrix_Translate(player_position.x, player_position.y, player_position.z)
             * (g_IsCutsceneActive ? Matrix_Identity() : Matrix_Rotate_Y(g_CameraTheta))
-            * Matrix_Scale(0.2f, 0.2f, 0.2f);
+            * Matrix_Scale(0.2f, 0.2f, 0.2f)
+            * Matrix_Rotate_Y(27);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, PLAYER);
         DrawVirtualObject("the_player");
@@ -484,7 +544,6 @@ int main(int argc, char* argv[])
 
         // Abaixo definimos as varáveis que efetivamente definem a câmera virtual.
         // Veja slides 195-227 e 229-234 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
-        glm::vec4 camera_lookat_l    = player_position; // Ponto "l", para onde a câmera (look-at) estará sempre olhando
         glm::vec4 camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
 
         //CÂMERA LIVRE
@@ -501,22 +560,22 @@ int main(int argc, char* argv[])
 
         if (forward) {
             camera_position_c += -w * 5.0f * timeDiff;
-            player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 5.0f, camera_position_c.z - 5.0f, 1.0f);
+            player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 5.0f, camera_position_c.z, 1.0f);
         }
 
         if (backward) {
             camera_position_c += w * 5.0f * timeDiff;
-            player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 5.0f, camera_position_c.z - 5.0f, 1.0f);
+            player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 5.0f, camera_position_c.z, 1.0f);
         }
 
         if (left) {
             camera_position_c += -u * 5.0f * timeDiff;
-            player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 5.0f, camera_position_c.z - 5.0f, 1.0f);
+            player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 5.0f, camera_position_c.z, 1.0f);
         }
 
         if (right) {
             camera_position_c += u * 5.0f * timeDiff, 0.0f;
-            player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 5.0f, camera_position_c.z - 5.0f, 1.0f);
+            player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 5.0f, camera_position_c.z, 1.0f);
         }
 
         // Aplicar gravidade
@@ -536,7 +595,6 @@ int main(int argc, char* argv[])
             camera_position_c = glm::vec4(player_position.x, player_position.y + 9.0f, player_position.z + 1.0f, 1.0f);
             std::cout << "Collision detected between player and island!" << std::endl;
         }
-     
 
         // Computamos a matriz "View" utilizando os parâmetros da câmera para
         // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
@@ -581,6 +639,7 @@ int main(int argc, char* argv[])
 
         #define ISLAND 0
         #define PLAYER 1
+        #define COW 2
 
         PushMatrix(model);
             model = Matrix_Translate(island_position.x,island_position.y,island_position.z)
@@ -624,6 +683,16 @@ int main(int argc, char* argv[])
                                 glUniform1i(g_object_id_uniform, ISLAND);
                                 DrawVirtualObject("the_island");
                             PopMatrix(model);
+                            PushMatrix(model);
+                                model = model * Matrix_Translate(4.0f, 2.0f, 6.0f);
+                                PushMatrix(model);
+                                    model = model * Matrix_Scale(5.0f, 5.0f, 5.0f)
+                                            * Matrix_Rotate_Y(10);
+                                    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+                                    glUniform1i(g_object_id_uniform, COW);
+                                    DrawVirtualObject("the_cow");
+                                PopMatrix(model);
+                            PopMatrix(model);
                         PopMatrix(model);
                     PopMatrix(model);
                 PopMatrix(model);
@@ -648,15 +717,6 @@ int main(int argc, char* argv[])
         // Calcular os limites da bounding box da ilha
         glm::vec3 island_bbox_min = g_VirtualScene["the_island"].bbox_min + glm::vec3(island_position);
         glm::vec3 island_bbox_max = g_VirtualScene["the_island"].bbox_max + glm::vec3(island_position);
-
-       /* // Verificar as coordenadas da bounding box do jogador
-        std::cout << "Player bounding box min: (" << player_bbox_min.x << ", " << player_bbox_min.y << ", " << player_bbox_min.z << ")" << std::endl;
-        std::cout << "Player bounding box max: (" << player_bbox_max.x << ", " << player_bbox_max.y << ", " << player_bbox_max.z << ")" << std::endl;
-
-        // Verificar as coordenadas da bounding box da ilha
-        std::cout << "Island bounding box min: (" << island_bbox_min.x << ", " << island_bbox_min.y << ", " << island_bbox_min.z << ")" << std::endl;
-        std::cout << "Island bounding box max: (" << island_bbox_max.x << ", " << island_bbox_max.y << ", " << island_bbox_max.z << ")" << std::endl;
-        */
         
         // Desenhar as bounding boxes
         glColor3f(0.0f, 0.0f, 1.0f); // Cor azul para o jogador
@@ -664,7 +724,6 @@ int main(int argc, char* argv[])
 
         glColor3f(1.0f, 0.0f, 0.0f); // Cor vermelha para a ilha
         DrawBoundingBox(island_bbox_min, island_bbox_max);
-
 
 
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
@@ -899,6 +958,8 @@ void LoadShadersFromFiles()
     // Variáveis em "shader_fragment.glsl" para acesso das imagens de textura
     glUseProgram(g_GpuProgramID);
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage0"), 0);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage1"), 1);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage2"), 2);
     glUseProgram(0);
 }
 
