@@ -170,7 +170,7 @@ struct SceneObject
 // Abaixo definimos variáveis globais utilizadas em várias funções do código.
 
 // Constante para a gravidade
-const float GRAVITY = -9.81f; // Aceleração devido à gravidade (m/s^2)
+const float GRAVITY = -2.0f; // Aceleração devido à gravidade (m/s^2)
 
 // Variável para a velocidade vertical do jogador
 float player_vertical_velocity = 0.0f;
@@ -276,7 +276,7 @@ int main(int argc, char* argv[])
     // Criamos uma janela do sistema operacional, com 800 colunas e 600 linhas
     // de pixels, e com título "INF01047 ...".
     GLFWwindow* window;
-    window = glfwCreateWindow(800, 600, "INF01047 - 00334988 - Lucca Dellazen Claus", NULL, NULL);
+    window = glfwCreateWindow(800, 600, "TropiCow", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -338,6 +338,14 @@ int main(int argc, char* argv[])
     ObjModel cowmodel("../../data/cow.obj");
     ComputeNormals(&cowmodel);
     BuildTrianglesAndAddToVirtualScene(&cowmodel);
+
+    ObjModel hitbox_playermodel("../../data/hitb_player.obj");
+    ComputeNormals(&hitbox_playermodel);
+    BuildTrianglesAndAddToVirtualScene(&hitbox_playermodel);
+
+    ObjModel hitbox_islandmodel("../../data/hitb_island.obj");
+    ComputeNormals(&hitbox_playermodel);
+    BuildTrianglesAndAddToVirtualScene(&hitbox_islandmodel);
 
     if ( argc > 1 )
     {
@@ -410,8 +418,10 @@ int main(int argc, char* argv[])
 
             float cutActFrame = (float)glfwGetTime();
             float timeDiff = cutActFrame - prevFrame;
+            prevFrame = cutActFrame;
 
-            t += 0.0005 * timeDiff;
+            t += 0.12f * timeDiff;
+            
         } else {
             g_IsCutsceneActive = false;
         }
@@ -499,13 +509,6 @@ int main(int argc, char* argv[])
         glUniform1i(g_object_id_uniform, PLAYER);
         DrawVirtualObject("the_player");
         
-        
-
-        TextRendering_ShowEulerAngles(window);
-
-        TextRendering_ShowProjection(window);
-
-        TextRendering_ShowFramesPerSecond(window);
 
         glfwSwapBuffers(window);
 
@@ -558,43 +561,46 @@ int main(int argc, char* argv[])
         float timeDiff = actFrame - prevFrame;
         prevFrame = actFrame;
 
+        // Aplicar gravidade
+        player_vertical_velocity += GRAVITY * timeDiff;
+        camera_position_c.y += player_vertical_velocity * timeDiff;
+        player_position.y += player_vertical_velocity * timeDiff;
+
+        // Verificar colisão entre jogador e ilha -4.0f,1.0f,10.0f
+        glm::vec4 new_player_position = glm::vec4(player_position.x, player_position.y, player_position.z, 1.0f); 
+
+        bool collision = CheckCollisionAABB(g_VirtualScene["hitb_player"], new_player_position,
+                                            g_VirtualScene["hitb_island"], island_position);
+
+        if (collision)
+        {
+            // Se houver colisão, redefinir a velocidade vertical do jogador
+            player_vertical_velocity = 0.0f;
+
+            std::cout << "Collision detected between player and island!" << std::endl;
+        }
+
         if (forward) {
             camera_position_c += -w * 5.0f * timeDiff;
-            player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 5.0f, camera_position_c.z, 1.0f);
+            player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 2.3f, camera_position_c.z, 1.0f);
         }
 
         if (backward) {
             camera_position_c += w * 5.0f * timeDiff;
-            player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 5.0f, camera_position_c.z, 1.0f);
+            player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 2.3f, camera_position_c.z, 1.0f);
         }
 
         if (left) {
             camera_position_c += -u * 5.0f * timeDiff;
-            player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 5.0f, camera_position_c.z, 1.0f);
+            player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 2.3f, camera_position_c.z, 1.0f);
         }
 
         if (right) {
-            camera_position_c += u * 5.0f * timeDiff, 0.0f;
-            player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 5.0f, camera_position_c.z, 1.0f);
+            camera_position_c += u * 5.0f * timeDiff;
+            player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 2.3f, camera_position_c.z, 1.0f);
         }
 
-        // Aplicar gravidade
-        //player_vertical_velocity += GRAVITY * timeDiff;
-        //camera_position_c.y += player_vertical_velocity * timeDiff;
         
-        // Verificar colisão entre jogador e ilha
-        glm::vec4 new_player_position = player_position + glm::vec4(player_position.x, player_position.y, player_position.z, 1.0f); 
-
-        bool collision = CheckCollisionAABB(g_VirtualScene["the_player"], new_player_position,
-                                            g_VirtualScene["the_island"], island_position);
-
-        if (collision)
-        {
-            // Atualizar a posição do jogador houver colisão
-            player_position = new_player_position;
-            camera_position_c = glm::vec4(player_position.x, player_position.y + 9.0f, player_position.z + 1.0f, 1.0f);
-            std::cout << "Collision detected between player and island!" << std::endl;
-        }
 
         // Computamos a matriz "View" utilizando os parâmetros da câmera para
         // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
@@ -699,43 +705,31 @@ int main(int argc, char* argv[])
             PopMatrix(model);
         PopMatrix(model);
 
-        model = Matrix_Translate(player_position.x, player_position.y, player_position.z)
-            * (g_IsCutsceneActive ? Matrix_Identity() : Matrix_Rotate_Y(g_CameraTheta))
-            * Matrix_Scale(0.2f, 0.2f, 0.2f);
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, PLAYER);
+        //model = Matrix_Translate(player_position.x, player_position.y, player_position.z)
+            //* (g_IsCutsceneActive ? Matrix_Identity() : Matrix_Rotate_Y(g_CameraTheta))
+           //* Matrix_Scale(0.2f, 0.2f, 0.2f);
+        //glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        //glUniform1i(g_object_id_uniform, PLAYER);
         //DrawVirtualObject("the_player");
 
+
         // Inicialização da bounding box do jogador
-        g_VirtualScene["the_player"].bbox_min = glm::vec3(-0.5f * 0.5f, -0.5f * 0.5f, -0.5f * 0.5f);
-        g_VirtualScene["the_player"].bbox_max = glm::vec3(0.5f * 0.5f, 0.5f * 0.5f, 0.5f * 0.5f);   
+        g_VirtualScene["hitb_player"].bbox_min = glm::vec3(-0.1f, -0.1f, -0.1f);
+        g_VirtualScene["hitb_player"].bbox_max = glm::vec3(0.1f, 0.1f, 0.1f);
+
+        // Inicialização da bounding box da ilha
+        g_VirtualScene["hitb_island"].bbox_min = glm::vec3(-12.0f, -12.0f, -12.0f);
+        g_VirtualScene["hitb_island"].bbox_max = glm::vec3(12.0f, 12.0f, 12.0f);
 
         // Calcular os limites da bounding box do jogador
-        glm::vec3 player_bbox_min = g_VirtualScene["the_player"].bbox_min + glm::vec3(player_position);
-        glm::vec3 player_bbox_max = g_VirtualScene["the_player"].bbox_max + glm::vec3(player_position);
+        glm::vec3 player_bbox_min = g_VirtualScene["hitb_player"].bbox_min + glm::vec3(player_position);
+        glm::vec3 player_bbox_max = g_VirtualScene["hitb_player"].bbox_max + glm::vec3(player_position);
 
         // Calcular os limites da bounding box da ilha
-        glm::vec3 island_bbox_min = g_VirtualScene["the_island"].bbox_min + glm::vec3(island_position);
-        glm::vec3 island_bbox_max = g_VirtualScene["the_island"].bbox_max + glm::vec3(island_position);
-        
-        // Desenhar as bounding boxes
-        glColor3f(0.0f, 0.0f, 1.0f); // Cor azul para o jogador
-        DrawBoundingBox(player_bbox_min, player_bbox_max);
-
-        glColor3f(1.0f, 0.0f, 0.0f); // Cor vermelha para a ilha
-        DrawBoundingBox(island_bbox_min, island_bbox_max);
+        glm::vec3 island_bbox_min = g_VirtualScene["hitb_island"].bbox_min + glm::vec3(island_position.x, island_position.y, island_position.z);
+        glm::vec3 island_bbox_max = g_VirtualScene["hitb_island"].bbox_max + glm::vec3(island_position. x, island_position.y, island_position.z);
 
 
-        // Imprimimos na tela os ângulos de Euler que controlam a rotação do
-        // terceiro cubo.
-        TextRendering_ShowEulerAngles(window);
-
-        // Imprimimos na informação sobre a matriz de projeção sendo utilizada.
-        TextRendering_ShowProjection(window);
-
-        // Imprimimos na tela informação sobre o número de quadros renderizados
-        // por segundo (frames per second).
-        TextRendering_ShowFramesPerSecond(window);
 
         // O framebuffer onde OpenGL executa as operações de renderização não
         // é o mesmo que está sendo mostrado para o usuário, caso contrário
