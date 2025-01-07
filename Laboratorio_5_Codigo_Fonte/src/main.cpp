@@ -169,6 +169,12 @@ struct SceneObject
 
 // Abaixo definimos variáveis globais utilizadas em várias funções do código.
 
+// Constante para a gravidade
+const float GRAVITY = -9.81f; // Aceleração devido à gravidade (m/s^2)
+
+// Variável para a velocidade vertical do jogador
+float player_vertical_velocity = 0.0f;
+
 bool CheckCollisionAABB(const SceneObject& obj1, const glm::vec3& position1,
                         const SceneObject& obj2, const glm::vec3& position2);
 
@@ -432,6 +438,8 @@ int main(int argc, char* argv[])
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, PLAYER);
         DrawVirtualObject("the_player");
+        
+        
 
         TextRendering_ShowEulerAngles(window);
 
@@ -511,8 +519,11 @@ int main(int argc, char* argv[])
             player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 5.0f, camera_position_c.z - 5.0f, 1.0f);
         }
 
-
-
+        // Aplicar gravidade
+        //player_vertical_velocity += GRAVITY * timeDiff;
+        //camera_position_c.y += player_vertical_velocity * timeDiff;
+        
+        // Verificar colisão entre jogador e ilha
         glm::vec4 new_player_position = player_position + glm::vec4(player_position.x, player_position.y, player_position.z, 1.0f); 
 
         bool collision = CheckCollisionAABB(g_VirtualScene["the_player"], new_player_position,
@@ -624,7 +635,7 @@ int main(int argc, char* argv[])
             * Matrix_Scale(0.2f, 0.2f, 0.2f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, PLAYER);
-        DrawVirtualObject("the_player");
+        //DrawVirtualObject("the_player");
 
         // Inicialização da bounding box do jogador
         g_VirtualScene["the_player"].bbox_min = glm::vec3(-0.5f * 0.5f, -0.5f * 0.5f, -0.5f * 0.5f);
