@@ -319,6 +319,7 @@ int main(int argc, char* argv[])
     // Carregamos imagens para serem utilizadas como textura
     LoadTextureImage("../../data/texture_island.png"); // TextureImage0
     LoadTextureImage("../../data/texture_cow.png"); //TextureImage1 
+    LoadTextureImage("../../data/texture_player.jpg"); //TextureImage2
 
     ObjModel islandmodel("../../data/island.obj");
     ComputeNormals(&islandmodel);
@@ -892,6 +893,7 @@ void LoadShadersFromFiles()
     glUseProgram(g_GpuProgramID);
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage0"), 0);
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage1"), 1);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage2"), 2);
     glUseProgram(0);
 }
 

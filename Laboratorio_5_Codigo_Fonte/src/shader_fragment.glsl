@@ -31,6 +31,7 @@ uniform vec4 bbox_max;
 // Variáveis para acesso das imagens de textura
 uniform sampler2D TextureImage0;
 uniform sampler2D TextureImage1;
+uniform sampler2D TextureImage2;
 
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
 out vec4 color;
@@ -91,8 +92,20 @@ if ( object_id == ISLAND ) {
 
 } else if ( object_id == PLAYER ) {
 
-    U = texcoords.x;
-    V = texcoords.y;
+    float minx = bbox_min.x;
+    float maxx = bbox_max.x;
+
+    float miny = bbox_min.y;
+    float maxy = bbox_max.y;
+
+    float minz = bbox_min.z;
+    float maxz = bbox_max.z;
+
+    U = (position_model.x - minx)/(maxx - minx);
+    V = (position_model.y- miny )/(maxy - miny);
+
+    Ks = vec3(0.5,0.5,0.5);
+    q = 40.0;
 
 } else if ( object_id == COW ) {
 
@@ -108,8 +121,6 @@ if ( object_id == ISLAND ) {
     U = (position_model.x - minx)/(maxx - minx);
     V = (position_model.y- miny )/(maxy - miny);
 
-    Ka = vec3(0.5,0.5,0.5);
-
 } 
 
 
@@ -118,7 +129,7 @@ vec3 Kd0 = texture(TextureImage0, vec2(U,V)).rgb;
 
 vec3 Kd1 = texture(TextureImage1, vec2(U,V)).rgb;
 
-//vec3 Kd2 = texture(TextureImage2, vec2(U, V)).rgb;
+vec3 Kd2 = texture(TextureImage2, vec2(U,V)).rgb;
 
 // Espectro da fonte de iluminação
 vec3 I = vec3(1.0,1.0,1.0); 
@@ -131,6 +142,9 @@ float lambert = max(0,dot(n,l));
 
 // Iluminação ambiente
 vec3 ambient_term = Ka * Ia; 
+
+// Termo especular utilizando o modelo de iluminação de Phong
+vec3 phong_specular_term = Ks * I * pow(max(0, dot(r,v)), q); 
 
 // Termo especular utilizando o modelo de iluminação de Blinn-Phong
 vec3 blinn_phong_specular_term = Ks * I * pow(max(0, dot(n,h)), q);
@@ -145,6 +159,11 @@ if (object_id == ISLAND) {
 
     //Uso do modelo de iluminação difusa de Lambert
     color.rgb = Kd1 * I * (lambert + 0.1);
+
+} else if (object_id == PLAYER){
+
+    //Uso do modelo de iluminação difusa de Lambert
+    color.rgb = (Kd2 * I * (lambert + 0.1)) + phong_specular_term;
 
 } else {
     // Outros objetos usam Kd0 e Kd1
