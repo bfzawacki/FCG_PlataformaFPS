@@ -170,7 +170,7 @@ struct SceneObject
 // Abaixo definimos variáveis globais utilizadas em várias funções do código.
 
 // Constante para a gravidade
-const float GRAVITY = -2.0f; // Aceleração devido à gravidade (m/s^2)
+const float GRAVITY = -6.0f; // Aceleração devido à gravidade (m/s^2)
 
 // Variável para a velocidade vertical do jogador
 float player_vertical_velocity = 0.0f;
@@ -344,8 +344,12 @@ int main(int argc, char* argv[])
     BuildTrianglesAndAddToVirtualScene(&hitbox_playermodel);
 
     ObjModel hitbox_islandmodel("../../data/hitb_island.obj");
-    ComputeNormals(&hitbox_playermodel);
+    ComputeNormals(&hitbox_islandmodel);
     BuildTrianglesAndAddToVirtualScene(&hitbox_islandmodel);
+
+    //ObjModel hitbox_islandmodelteste("../../data/teste.obj");
+    //ComputeNormals(&hitbox_playermodel);
+    //BuildTrianglesAndAddToVirtualScene(&hitbox_islandmodel);
 
     if ( argc > 1 )
     {
@@ -566,8 +570,9 @@ int main(int argc, char* argv[])
         camera_position_c.y += player_vertical_velocity * timeDiff;
         player_position.y += player_vertical_velocity * timeDiff;
 
-        // Verificar colisão entre jogador e ilha -4.0f,1.0f,10.0f
-        glm::vec4 new_player_position = glm::vec4(player_position.x, player_position.y, player_position.z, 1.0f); 
+        // Verificar colisão entre jogador e ilha
+        glm::vec4 new_player_position = glm::vec4(player_position.x, player_position.y + 11.0f, player_position.z, 1.0f);
+         
 
         bool collision = CheckCollisionAABB(g_VirtualScene["hitb_player"], new_player_position,
                                             g_VirtualScene["hitb_island"], island_position);
@@ -577,7 +582,7 @@ int main(int argc, char* argv[])
             // Se houver colisão, redefinir a velocidade vertical do jogador
             player_vertical_velocity = 0.0f;
 
-            std::cout << "Collision detected between player and island!" << std::endl;
+            //std::cout << "Collision detected between player and island!" << std::endl;
         }
 
         if (forward) {
@@ -705,29 +710,32 @@ int main(int argc, char* argv[])
             PopMatrix(model);
         PopMatrix(model);
 
-        //model = Matrix_Translate(player_position.x, player_position.y, player_position.z)
-            //* (g_IsCutsceneActive ? Matrix_Identity() : Matrix_Rotate_Y(g_CameraTheta))
-           //* Matrix_Scale(0.2f, 0.2f, 0.2f);
+        //model = Matrix_Translate(island_position.x, island_position.y, island_position.z)
+          // * Matrix_Scale(30.0f, 30.0f, 30.0f);
         //glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        //glUniform1i(g_object_id_uniform, PLAYER);
-        //DrawVirtualObject("the_player");
+        //glUniform1i(g_object_id_uniform, ISLAND);
+        //DrawVirtualObject("hitb_island");
+
+        
+            
 
 
         // Inicialização da bounding box do jogador
-        g_VirtualScene["hitb_player"].bbox_min = glm::vec3(-0.1f, -0.1f, -0.1f);
-        g_VirtualScene["hitb_player"].bbox_max = glm::vec3(0.1f, 0.1f, 0.1f);
+        g_VirtualScene["hitb_player"].bbox_min = glm::vec3(-0.5f, -0.5f, -0.5f);
+        g_VirtualScene["hitb_player"].bbox_max = glm::vec3(0.5f, 0.5f, 0.5f);
 
         // Inicialização da bounding box da ilha
-        g_VirtualScene["hitb_island"].bbox_min = glm::vec3(-12.0f, -12.0f, -12.0f);
-        g_VirtualScene["hitb_island"].bbox_max = glm::vec3(12.0f, 12.0f, 12.0f);
+        g_VirtualScene["hitb_island"].bbox_min = glm::vec3(-11.0f, -11.0f, -11.0f);
+        g_VirtualScene["hitb_island"].bbox_max = glm::vec3(11.0f, 11.0f, 11.0f);
 
         // Calcular os limites da bounding box do jogador
         glm::vec3 player_bbox_min = g_VirtualScene["hitb_player"].bbox_min + glm::vec3(player_position);
         glm::vec3 player_bbox_max = g_VirtualScene["hitb_player"].bbox_max + glm::vec3(player_position);
 
         // Calcular os limites da bounding box da ilha
-        glm::vec3 island_bbox_min = g_VirtualScene["hitb_island"].bbox_min + glm::vec3(island_position.x, island_position.y, island_position.z);
-        glm::vec3 island_bbox_max = g_VirtualScene["hitb_island"].bbox_max + glm::vec3(island_position. x, island_position.y, island_position.z);
+        glm::vec3 island_bbox_min = g_VirtualScene["hitb_island"].bbox_min + glm::vec3(island_position);
+        glm::vec3 island_bbox_max = g_VirtualScene["hitb_island"].bbox_max + glm::vec3(island_position);
+
 
 
 
