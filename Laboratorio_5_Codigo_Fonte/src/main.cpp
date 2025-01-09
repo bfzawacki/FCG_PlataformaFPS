@@ -602,13 +602,13 @@ int main(int argc, char* argv[])
                                             g_VirtualScene["hitb_island2"], glm::vec4(island_position.x + 25.0f, island_position.y + 9.5f, island_position.z + 15.0f, 1.0f));
 
         collision3 = CheckCollisionAABB(g_VirtualScene["hitb_player"], new_player_position,
-                                            g_VirtualScene["hitb_island3"], glm::vec4(island_position.x + 65.0f, island_position.y + 12.0f, island_position.z - 15.0f, 1.0f));                                                                        
+                                            g_VirtualScene["hitb_island3"], glm::vec4(island_position.x + 65.0f, island_position.y + 10.5f, island_position.z - 15.0f, 1.0f));                                                                        
 
         collision4 = CheckCollisionAABB(g_VirtualScene["hitb_player"], new_player_position,
                                             g_VirtualScene["hitb_island4"], glm::vec4(island_position.x + 95.0f, island_position.y + 27.5f, island_position.z + 10.0f, 1.0f));
 
         collision5 = CheckCollisionAABB(g_VirtualScene["hitb_player"], new_player_position,
-                                            g_VirtualScene["hitb_island5"], glm::vec4(island_position.x + 135.0f, island_position.y + 27.0f, island_position.z + 10.0f, 1.0f));  
+                                            g_VirtualScene["hitb_island5"], glm::vec4(island_position.x + 135.0f, island_position.y + 28.0f, island_position.z + 10.0f, 1.0f));  
 
         cowllision = CheckCollisionAABB(g_VirtualScene["hitb_player"], new_player_position,
                                             g_VirtualScene["the_cow"], glm::vec4(cow_position.x, cow_position.y + 11.0f, cow_position.z, 1.0f));                                                                      
@@ -617,13 +617,12 @@ int main(int argc, char* argv[])
         {
             // Se houver colisão, redefinir a velocidade vertical do jogador
             player_vertical_velocity = 0.0f;
-
-            std::cout << "Collision detected between player and island!" << std::endl;
         }
 
         if(cowllision)
         {
-            std::cout << "Collision detected between player and cow!" << std::endl;
+            // Se houver colisão com a vaca, reiniciar o jogo
+            camera_position_c = glm::vec4(-4.0f,1.0f,10.0f,1.0f);
         }
 
 
@@ -803,18 +802,16 @@ int main(int argc, char* argv[])
         glm::vec3 island2_bbox_min = g_VirtualScene["hitb_island2"].bbox_min + glm::vec3(island_position.x + 25.0f, island_position. y + 9.5f, island_position.z + 15.0f);
         glm::vec3 island2_bbox_max = g_VirtualScene["hitb_island2"].bbox_max + glm::vec3(island_position.x + 25.0f, island_position. y + 9.5f, island_position.z + 15.0f);
 
-        glm::vec3 island3_bbox_min = g_VirtualScene["hitb_island3"].bbox_min + glm::vec3(island_position.x + 65.0f, island_position. y + 12.0f, island_position.z - 15.0f);
-        glm::vec3 island3_bbox_max = g_VirtualScene["hitb_island3"].bbox_max + glm::vec3(island_position.x + 65.0f, island_position. y + 12.0f, island_position.z - 15.0f);
+        glm::vec3 island3_bbox_min = g_VirtualScene["hitb_island3"].bbox_min + glm::vec3(island_position.x + 65.0f, island_position. y + 10.5f, island_position.z - 15.0f);
+        glm::vec3 island3_bbox_max = g_VirtualScene["hitb_island3"].bbox_max + glm::vec3(island_position.x + 65.0f, island_position. y + 10.5f, island_position.z - 15.0f);
 
         glm::vec3 island4_bbox_min = g_VirtualScene["hitb_island4"].bbox_min + glm::vec3(island_position.x + 95.0f, island_position. y + 27.5f, island_position.z + 10.0f);
         glm::vec3 island4_bbox_max = g_VirtualScene["hitb_island4"].bbox_max + glm::vec3(island_position.x + 95.0f, island_position. y + 27.5f, island_position.z + 10.0f);
 
-        glm::vec3 island5_bbox_min = g_VirtualScene["hitb_island5"].bbox_min + glm::vec3(island_position.x + 135.0f, island_position. y + 27.0f, island_position.z + 10.0f);
-        glm::vec3 island5_bbox_max = g_VirtualScene["hitb_island5"].bbox_max + glm::vec3(island_position.x + 135.0f, island_position. y + 27.0f, island_position.z + 10.0f);
+        glm::vec3 island5_bbox_min = g_VirtualScene["hitb_island5"].bbox_min + glm::vec3(island_position.x + 135.0f, island_position. y + 28.0f, island_position.z + 10.0f);
+        glm::vec3 island5_bbox_max = g_VirtualScene["hitb_island5"].bbox_max + glm::vec3(island_position.x + 135.0f, island_position. y + 28.0f, island_position.z + 10.0f);
 
         
-//40.0f, 3.0f, 0.0f
-
 
 
         // O framebuffer onde OpenGL executa as operações de renderização não
