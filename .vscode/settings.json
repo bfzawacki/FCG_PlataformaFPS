@@ -1,5 +1,5 @@
 {
-    "cmake.sourceDirectory": "C:/Users/bfzaw/Documents/GitHub/FCG_PlataformaFPS/Laboratorio_5_Codigo_Fonte",
+    "cmake.sourceDirectory": "/home/lucca/Desktop/FCG_PlataformaFPS/Laboratorio_5_Codigo_Fonte",
     "files.associations": {
         "vector": "cpp"
     }

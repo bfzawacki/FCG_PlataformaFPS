@@ -201,11 +201,18 @@ bool g_LeftMouseButtonPressed = false;
 bool g_RightMouseButtonPressed = false; // Análogo para botão direito do mouse
 bool g_MiddleMouseButtonPressed = false; // Análogo para botão do meio do mouse
 
-// Variáveis utiliazdas para controlar a movimentação da câmera quando uma tecla (W,A,S,D) é pressionada.
+// Variáveis utiliazdas para controlar a movimentação básica da câmera quando uma tecla (W,A,S,D) é pressionada.
 bool forward = false;
 bool backward = false;
 bool left = false;
 bool right = false;
+
+// Variáveis utiliazdas para controlar o pulo do personagem.
+bool isJumping = false;
+float jumpVelocity = 0.0f;
+float jumpStrength = 5.0f;
+// Altura fixa do jogador usada para impedir movimentação no eixo Y
+float groundLevel; 
 
 // Variáveis que definem a câmera em coordenadas esféricas, controladas pelo
 // usuário através do mouse (veja função CursorPosCallback()). A posição
@@ -591,32 +598,50 @@ int main(int argc, char* argv[])
 
         // Verificar colisão entre jogador e ilha
         glm::vec4 new_player_position = glm::vec4(player_position.x, player_position.y + 11.0f, player_position.z, 1.0f);
-         
 
         bool collision, collision2, collision3, collision4, collision5, cowllision;
         
         collision = CheckCollisionAABB(g_VirtualScene["hitb_player"], new_player_position,
-                                           g_VirtualScene["hitb_island1"], island_position);
+                            g_VirtualScene["hitb_island1"], island_position);
 
         collision2 = CheckCollisionAABB(g_VirtualScene["hitb_player"], new_player_position,
-                                            g_VirtualScene["hitb_island2"], glm::vec4(island_position.x + 25.0f, island_position.y + 9.5f, island_position.z + 15.0f, 1.0f));
+                            g_VirtualScene["hitb_island2"], glm::vec4(island_position.x + 25.0f, island_position.y + 9.5f, island_position.z + 15.0f, 1.0f));
 
         collision3 = CheckCollisionAABB(g_VirtualScene["hitb_player"], new_player_position,
-                                            g_VirtualScene["hitb_island3"], glm::vec4(island_position.x + 65.0f, island_position.y + 10.5f, island_position.z - 15.0f, 1.0f));                                                                        
+                            g_VirtualScene["hitb_island3"], glm::vec4(island_position.x + 65.0f, island_position.y + 10.5f, island_position.z - 15.0f, 1.0f));                                                                        
 
         collision4 = CheckCollisionAABB(g_VirtualScene["hitb_player"], new_player_position,
-                                            g_VirtualScene["hitb_island4"], glm::vec4(island_position.x + 95.0f, island_position.y + 27.5f, island_position.z + 10.0f, 1.0f));
+                            g_VirtualScene["hitb_island4"], glm::vec4(island_position.x + 95.0f, island_position.y + 27.5f, island_position.z + 10.0f, 1.0f));
 
         collision5 = CheckCollisionAABB(g_VirtualScene["hitb_player"], new_player_position,
-                                            g_VirtualScene["hitb_island5"], glm::vec4(island_position.x + 135.0f, island_position.y + 28.0f, island_position.z + 10.0f, 1.0f));  
+                            g_VirtualScene["hitb_island5"], glm::vec4(island_position.x + 135.0f, island_position.y + 28.0f, island_position.z + 10.0f, 1.0f));  
 
         cowllision = CheckCollisionAABB(g_VirtualScene["hitb_player"], new_player_position,
-                                            g_VirtualScene["the_cow"], glm::vec4(cow_position.x, cow_position.y + 11.0f, cow_position.z, 1.0f));                                                                      
+                            g_VirtualScene["the_cow"], glm::vec4(cow_position.x, cow_position.y + 11.0f, cow_position.z, 1.0f));                                                                      
 
-        if (collision || collision2 || collision3 || collision4 || collision5)
-        {
-            // Se houver colisão, redefinir a velocidade vertical do jogador
-            player_vertical_velocity = 0.0f;
+        if (collision) {
+            groundLevel = island_position.y; 
+            player_vertical_velocity = 0.0f;  
+        }
+
+        if (collision2) {
+            groundLevel = island_position.y + 9.5f; 
+            player_vertical_velocity = 0.0f;  
+        }
+
+        if (collision3) {
+            groundLevel = island_position.y + 21.5f; 
+            player_vertical_velocity = 0.0f;  
+        }
+
+        if (collision4) {
+            groundLevel = island_position.y + 27.5f; 
+            player_vertical_velocity = 0.0f;  
+        }
+
+        if (collision5) {
+            groundLevel = island_position.y + 28.0f; 
+            player_vertical_velocity = 0.0f;  
         }
 
         if(cowllision)
@@ -625,28 +650,38 @@ int main(int argc, char* argv[])
             camera_position_c = glm::vec4(-4.0f,1.0f,10.0f,1.0f);
         }
 
-
         if (forward) {
-            camera_position_c += -w * 5.0f * timeDiff;
+            camera_position_c += glm::vec4(-w.x, 0.0f, -w.z, 0.0f) * 2.7f * timeDiff;
             player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 2.3f, camera_position_c.z, 1.0f);
         }
 
         if (backward) {
-            camera_position_c += w * 5.0f * timeDiff;
+            camera_position_c += glm::vec4(w.x, 0.0f, w.z, 0.0f) * 2.7f * timeDiff;
             player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 2.3f, camera_position_c.z, 1.0f);
         }
 
         if (left) {
-            camera_position_c += -u * 5.0f * timeDiff;
+            camera_position_c += glm::vec4(-u.x, 0.0f, -u.z, 0.0f) * 2.7f * timeDiff;
             player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 2.3f, camera_position_c.z, 1.0f);
         }
 
         if (right) {
-            camera_position_c += u * 5.0f * timeDiff;
+            camera_position_c += glm::vec4(u.x, 0.0f, u.z, 0.0f) * 2.7f * timeDiff;
             player_position = glm::vec4(camera_position_c.x, camera_position_c.y - 2.3f, camera_position_c.z, 1.0f);
         }
 
-        
+        if (isJumping) {
+            camera_position_c.y += jumpVelocity * 8.0f * timeDiff;
+            jumpVelocity += GRAVITY * 0.8f * timeDiff;
+
+            if (camera_position_c.y <= groundLevel) {
+            camera_position_c.y = groundLevel;
+            isJumping = false;
+            jumpVelocity = 0.0f;
+            }
+
+            player_position = glm::vec4(camera_position_c.x, groundLevel - 2.3f, camera_position_c.z, 1.0f);
+        }
 
         // Computamos a matriz "View" utilizando os parâmetros da câmera para
         // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
@@ -1626,16 +1661,9 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
         g_AngleZ += (mod & GLFW_MOD_SHIFT) ? -delta : delta;
     }
 
-    // Se o usuário apertar a tecla espaço, resetamos os ângulos de Euler para zero.
-    if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
-    {
-        g_AngleX = 0.0f;
-        g_AngleY = 0.0f;
-        g_AngleZ = 0.0f;
-        g_ForearmAngleX = 0.0f;
-        g_ForearmAngleZ = 0.0f;
-        g_TorsoPositionX = 0.0f;
-        g_TorsoPositionY = 0.0f;
+    if (key == GLFW_KEY_SPACE && action == GLFW_PRESS && !isJumping) {
+        isJumping = true;
+        jumpVelocity = jumpStrength;
     }
 
     // Se o usuário apertar a tecla P, utilizamos projeção perspectiva.
