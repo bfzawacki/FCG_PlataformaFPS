@@ -421,11 +421,6 @@ int main(int argc, char* argv[])
 
         glUseProgram(g_GpuProgramID);
 
-        float r = g_CameraDistance;
-        float y = r*sin(g_CameraPhi);
-        float z = r*cos(g_CameraPhi)*cos(g_CameraTheta);
-        float x = r*cos(g_CameraPhi)*sin(g_CameraTheta);
-
         glm::vec4 camera_lookat_l  = player_position; 
         glm::vec4 camera_up_vector = glm::vec4(0.0f,1.0f,0.0f,0.0f); 
 
@@ -803,14 +798,6 @@ int main(int argc, char* argv[])
         g_VirtualScene["the_cow"].bbox_min = glm::vec3(-4.5f, -4.5f, -4.5f);
         g_VirtualScene["the_cow"].bbox_max = glm::vec3(4.5f, 4.5f, 4.5f);
 
-        // Calcular os limites da bounding box do jogador
-        glm::vec3 player_bbox_min = g_VirtualScene["hitb_player"].bbox_min + glm::vec3(player_position);
-        glm::vec3 player_bbox_max = g_VirtualScene["hitb_player"].bbox_max + glm::vec3(player_position);
-
-        // Calcular os limites da bounding box da vaca
-        glm::vec3 cow_bbox_min = g_VirtualScene["the_cow"].bbox_min + glm::vec3(cow_position.x, cow_position. y + 11.0f, cow_position.z);
-        glm::vec3 cow_bbox_max = g_VirtualScene["the_cow"].bbox_max + glm::vec3(cow_position.x, cow_position. y + 11.0f, cow_position.z);
-
         // Inicialização das bounding boxes da ilha
         g_VirtualScene["hitb_island1"].bbox_min = glm::vec3(-11.0f, -11.0f, -11.0f);
         g_VirtualScene["hitb_island1"].bbox_max = glm::vec3(11.0f, 11.0f, 11.0f);
@@ -826,27 +813,6 @@ int main(int argc, char* argv[])
 
         g_VirtualScene["hitb_island5"].bbox_min = glm::vec3(-9.0f, -9.0f, -9.0f);
         g_VirtualScene["hitb_island5"].bbox_max = glm::vec3(9.0f, 9.0f, 9.0f);
-
-
-
-        // Calcular os limites da bounding boxes da ilha 
-        glm::vec3 island1_bbox_min = g_VirtualScene["hitb_island1"].bbox_min + glm::vec3(island_position);
-        glm::vec3 island1_bbox_max = g_VirtualScene["hitb_island1"].bbox_max + glm::vec3(island_position);
-
-        glm::vec3 island2_bbox_min = g_VirtualScene["hitb_island2"].bbox_min + glm::vec3(island_position.x + 25.0f, island_position. y + 10.5f, island_position.z + 15.0f);
-        glm::vec3 island2_bbox_max = g_VirtualScene["hitb_island2"].bbox_max + glm::vec3(island_position.x + 25.0f, island_position. y + 10.5f, island_position.z + 15.0f);
-
-        glm::vec3 island3_bbox_min = g_VirtualScene["hitb_island3"].bbox_min + glm::vec3(island_position.x + 65.0f, island_position. y + 12.5f, island_position.z - 15.0f);
-        glm::vec3 island3_bbox_max = g_VirtualScene["hitb_island3"].bbox_max + glm::vec3(island_position.x + 65.0f, island_position. y + 12.5f, island_position.z - 15.0f);
-
-        glm::vec3 island4_bbox_min = g_VirtualScene["hitb_island4"].bbox_min + glm::vec3(island_position.x + 95.0f, island_position. y + 29.0f, island_position.z + 10.0f);
-        glm::vec3 island4_bbox_max = g_VirtualScene["hitb_island4"].bbox_max + glm::vec3(island_position.x + 95.0f, island_position. y + 29.0f, island_position.z + 10.0f);
-
-        glm::vec3 island5_bbox_min = g_VirtualScene["hitb_island5"].bbox_min + glm::vec3(island_position.x + 135.0f, island_position. y + 28.0f, island_position.z + 10.0f);
-        glm::vec3 island5_bbox_max = g_VirtualScene["hitb_island5"].bbox_max + glm::vec3(island_position.x + 135.0f, island_position. y + 28.0f, island_position.z + 10.0f);
-
-        
-
 
         // O framebuffer onde OpenGL executa as operações de renderização não
         // é o mesmo que está sendo mostrado para o usuário, caso contrário
