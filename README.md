@@ -2,7 +2,7 @@
 
 ## **Descrição do Trabalho**
 
-Este projeto foi desenvolvido por Bruno Fialho e Lucca Claus como parte da disciplina de Fundamentos de Computação Gráfica (INF01047). O objetivo principal foi implementar um jogo 3D que utiliza conceitos estudados durante o curso. TropiCow é um simples jogo onde o jogador precisa pular de ilha em ilha com o objetivo de alcançar uma vaca no fim do cenário.
+Este projeto foi desenvolvido por Bruno Fialho Zawacki e Lucca Dellazen Claus como parte da disciplina de Fundamentos de Computação Gráfica (INF01047). O objetivo principal foi implementar um jogo 3D que utiliza conceitos estudados durante o curso. TropiCow é um simples jogo onde o jogador precisa pular de ilha em ilha com o objetivo de alcançar uma vaca no fim do cenário.
 
 ## **Contribuições dos Membros**
 
