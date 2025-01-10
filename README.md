@@ -30,6 +30,10 @@ Para realizar a implementação das colisões, primeiro foram criados novos mode
 
 ## **Imagens da Aplicação**
 
+![Image1 (Cutscene)](./ReadmeImages/image1.png)
+![Image2 (Path created with islands)](./ReadmeImages/image2.png)
+![Image3 (Final Island with Cow)](./ReadmeImages/image3.png)
+
 ## **Manual de Utilização**
 
 * **Teclas de Navegação**: Use as teclas WASD para mover o personagem e Espaço para pular.  
